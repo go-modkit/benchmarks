@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  modkit:
+    build: ./apps/modkit
+    ports:
+      - "3001:3000"
+  nestjs:
+    build: ./apps/nestjs
+    ports:
+      - "3002:3000"
+  baseline:
+    build: ./apps/baseline
+    ports:
+      - "3003:3000"
+  wire:
+    build: ./apps/wire
+    ports:
+      - "3004:3000"
+  fx:
+    build: ./apps/fx
+    ports:
+      - "3005:3000"
+  do:
+    build: ./apps/do
+    ports:
+      - "3006:3000"
