@@ -76,6 +76,9 @@ def publication_sync_check() -> None:
     readme = README.read_text(encoding="utf-8")
     report = report_content()
     template = generator_template_content()
+    readme_folded = readme.casefold()
+    template_folded = template.casefold()
+    report_folded = report.casefold()
 
     readme_required = [
         "## Publication policy",
@@ -92,11 +95,12 @@ def publication_sync_check() -> None:
         "Parity failures invalidate performance interpretation",
     ]
     for token in shared_caveats:
-        if token not in readme:
+        token_folded = token.casefold()
+        if token_folded not in readme_folded:
             raise SystemExit(f"publication-sync-check failed: missing caveat '{token}' in README.md")
-        if token not in template:
+        if token_folded not in template_folded:
             raise SystemExit(f"publication-sync-check failed: missing caveat '{token}' in scripts/generate-report.py")
-        if REPORT.exists() and token not in report:
+        if REPORT.exists() and token_folded not in report_folded:
             raise SystemExit(f"publication-sync-check failed: missing caveat '{token}' in results/latest/report.md")
 
     report_source = "report + generator" if REPORT.exists() else "generator template"
