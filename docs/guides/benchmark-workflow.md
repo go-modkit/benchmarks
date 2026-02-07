@@ -25,6 +25,16 @@ make benchmark-nestjs
 
 Per-target runs also emit `results/latest/environment.fingerprint.json` and `results/latest/environment.manifest.json`.
 
+## Manual bounded CI run
+
+Use GitHub Actions workflow `benchmark-manual` with bounded `workflow_dispatch` inputs:
+
+- `frameworks`: comma-separated subset of `modkit,nestjs,baseline,wire,fx,do`
+- `runs`: integer in range `1..10`
+- `benchmark_requests`: integer in range `50..1000`
+
+Runs that exceed bounds are rejected before benchmark execution.
+
 Optional OSS measurement engine:
 
 ```bash
