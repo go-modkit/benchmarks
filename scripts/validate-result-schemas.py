@@ -15,6 +15,8 @@ def load_json(path):
     try:
         with path.open("r", encoding="utf-8") as handle:
             return json.load(handle)
+    except FileNotFoundError as exc:
+        raise SystemExit(f"File not found: {path}") from exc
     except json.JSONDecodeError as exc:
         raise SystemExit(f"Malformed JSON in {path}: {exc.msg} at line {exc.lineno}, column {exc.colno}") from exc
 
