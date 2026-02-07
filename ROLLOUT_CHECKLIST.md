@@ -14,8 +14,7 @@ All 16 tasks completed successfully. Work is ready for PR.
 3. README.md - Badge row, modkit narrative, trust section
 4. docs/guides/AGENTS.md - Guide index updates
 5. docs/guides/benchmark-publication-policy.md (new) - Publication policy
-6. docs/guides/omo-setup.md (new) - OMO config guide
-7. docs/guides/repository-metadata.md (new) - Metadata profile
+6. docs/guides/repository-metadata.md (new) - Metadata profile
 
 ## Suggested PR Sequence
 
@@ -35,4 +34,3 @@ All 16 tasks completed successfully. Work is ready for PR.
 
 ## Evidence
 See .sisyphus/evidence/task-8-final-gate.txt for verification output.
-

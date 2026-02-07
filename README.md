@@ -108,7 +108,6 @@ benchmarks/
 - `docs/guides/adding-scenarios.md` - how to add parity scenarios
 - `docs/guides/benchmark-workflow.md` - benchmark and reporting flow
 - `docs/guides/benchmark-publication-policy.md` - minimum disclosure for publishable results
-- `docs/guides/omo-setup.md` - OMO configuration recommendations
 - `docs/guides/repository-metadata.md` - repository metadata and positioning
 
 **Governance:**
