@@ -1,5 +1,11 @@
 # benchmarks
 
+[![CI](https://github.com/go-modkit/benchmarks/actions/workflows/ci.yml/badge.svg)](https://github.com/go-modkit/benchmarks/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/gh/go-modkit/benchmarks/branch/main/graph/badge.svg)](https://codecov.io/gh/go-modkit/benchmarks)
+[![CodeQL](https://github.com/go-modkit/benchmarks/actions/workflows/codeql.yml/badge.svg)](https://github.com/go-modkit/benchmarks/actions/workflows/codeql.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/go-modkit/benchmarks)](https://goreportcard.com/report/github.com/go-modkit/benchmarks)
+[![License](https://img.shields.io/github/license/go-modkit/benchmarks)](LICENSE)
+
 Benchmark harness for framework parity and performance comparisons.
 
 ## What this repository does
@@ -7,6 +13,23 @@ Benchmark harness for framework parity and performance comparisons.
 - validates API behavior parity across implementations before performance runs
 - stores declarative parity fixtures and seed data
 - provides benchmark orchestration scripts and report generation
+
+## How this complements modkit
+
+This repository serves as the companion performance laboratory for [go-modkit/modkit](https://github.com/go-modkit/modkit). While modkit focuses on developer ergonomics and modular architecture, this harness ensures that those abstractions do not come at the cost of performance or correctness.
+
+By maintaining a strict parity-gate, we ensure that every framework implementation compared here—including modkit—adheres to the same API contract before a single request is timed.
+
+## Why trust these benchmarks
+
+We prioritize correctness and reproducibility over "hero numbers":
+
+- **Parity-Gated**: Benchmarks are automatically skipped if a target fails the API behavior contract. We only measure what is correct.
+- **Reproducible**: All runs use Docker-based orchestration with pinned resource limits and standardized load profiles.
+- **Transparent**: Raw metrics, environment fingerprints, and statistical variance are preserved for every run.
+- **Policy-Driven**: Quality gates enforce statistical significance and schema validation for all artifacts.
+
+For detailed execution details and fairness principles, see our [Methodology](METHODOLOGY.md) and [Benchmark Workflow](docs/guides/benchmark-workflow.md).
 
 ## Quickstart
 
