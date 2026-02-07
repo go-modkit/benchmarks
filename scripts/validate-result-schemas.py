@@ -7,6 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = ROOT / "results" / "latest" / "raw"
 RAW_SCHEMA = ROOT / "schemas" / "benchmark-raw-v1.schema.json"
+SUMMARY_FILE = ROOT / "results" / "latest" / "summary.json"
+SUMMARY_SCHEMA = ROOT / "schemas" / "benchmark-summary-v1.schema.json"
 
 
 def load_json(path):
@@ -70,11 +72,65 @@ def validate_raw(raw_dir, schema_path):
     print(f"benchmark-raw-schema-check: validated {len(files)} raw artifact(s)")
 
 
+def validate_summary(summary_file, schema_path):
+    schema = load_json(schema_path)
+    schema_version = (schema.get("properties") or {}).get("schema_version", {}).get("const")
+    if not isinstance(schema_version, str) or not schema_version:
+        raise SystemExit(f"Summary schema file missing properties.schema_version.const: {schema_path}")
+
+    if not summary_file.exists():
+        raise SystemExit(f"Summary file not found: {summary_file}")
+
+    payload = load_json(summary_file)
+    required = (
+        "schema_version",
+        "generated_at",
+        "total_targets",
+        "successful_targets",
+        "skipped_targets",
+        "targets",
+    )
+    for field in required:
+        if field not in payload:
+            raise SystemExit(f"Summary schema validation failed for {summary_file}: missing {field}")
+
+    if payload.get("schema_version") != schema_version:
+        raise SystemExit(
+            f"Summary schema validation failed for {summary_file}: schema_version={payload.get('schema_version')!r}, expected {schema_version!r}"
+        )
+
+    targets = payload.get("targets")
+    if not isinstance(targets, list):
+        raise SystemExit(f"Summary schema validation failed for {summary_file}: targets must be array")
+
+    for idx, target in enumerate(targets):
+        if not isinstance(target, dict):
+            raise SystemExit(f"Summary schema validation failed for {summary_file}: targets[{idx}] must be object")
+        for field in ("framework", "status", "target", "provenance"):
+            if field not in target:
+                raise SystemExit(f"Summary schema validation failed for {summary_file}: targets[{idx}] missing {field}")
+        provenance = target.get("provenance")
+        if not isinstance(provenance, dict) or not provenance.get("raw_source"):
+            raise SystemExit(
+                f"Summary schema validation failed for {summary_file}: targets[{idx}].provenance.raw_source is required"
+            )
+
+        status = target.get("status")
+        if status == "ok" and "uncertainty" not in target:
+            raise SystemExit(
+                f"Summary schema validation failed for {summary_file}: targets[{idx}] missing uncertainty for status=ok"
+            )
+
+    print("benchmark-summary-schema-check: validated summary artifact")
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Validate benchmark result schemas")
-    parser.add_argument("cmd", choices=["raw-check"])
+    parser.add_argument("cmd", choices=["raw-check", "summary-check"])
     parser.add_argument("--raw-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--raw-schema", type=Path, default=RAW_SCHEMA)
+    parser.add_argument("--summary-file", type=Path, default=SUMMARY_FILE)
+    parser.add_argument("--summary-schema", type=Path, default=SUMMARY_SCHEMA)
     return parser.parse_args()
 
 
@@ -82,6 +138,9 @@ def main():
     args = parse_args()
     if args.cmd == "raw-check":
         validate_raw(args.raw_dir, args.raw_schema)
+        return
+    if args.cmd == "summary-check":
+        validate_summary(args.summary_file, args.summary_schema)
         return
     raise SystemExit(f"Unknown command: {args.cmd}")
 

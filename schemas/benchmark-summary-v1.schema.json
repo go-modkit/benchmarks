@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://go-modkit.dev/schemas/benchmark-summary-v1.schema.json",
+  "title": "Benchmark Summary v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "total_targets",
+    "successful_targets",
+    "skipped_targets",
+    "targets"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "const": "summary-v1"
+    },
+    "generated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "total_targets": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "successful_targets": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "skipped_targets": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "framework",
+          "status",
+          "target",
+          "provenance"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "framework": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "skipped"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string"
+          },
+          "median": {
+            "type": "object"
+          },
+          "uncertainty": {
+            "type": "object"
+          },
+          "provenance": {
+            "type": "object",
+            "required": [
+              "raw_source"
+            ],
+            "properties": {
+              "raw_source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "manifest": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
