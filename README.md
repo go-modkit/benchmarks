@@ -123,7 +123,6 @@ benchmarks/
 - `docs/guides/adding-scenarios.md` - how to add parity scenarios
 - `docs/guides/benchmark-workflow.md` - benchmark and reporting flow
 - `docs/guides/benchmark-publication-policy.md` - minimum disclosure for publishable results
-- `docs/guides/repository-metadata.md` - repository metadata and positioning
 
 **Governance:**
 - `MAINTAINERS.md` - maintainership roles and triage expectations
