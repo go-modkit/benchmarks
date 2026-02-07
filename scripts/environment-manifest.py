@@ -17,6 +17,35 @@ REQUIRED_VERSION_FIELDS = [
 ]
 
 
+def parse_service_blocks(compose_text):
+    in_services = False
+    current = None
+    blocks = {}
+    for raw_line in compose_text.splitlines():
+        line = raw_line.rstrip("\n")
+        if line.strip() == "services:":
+            in_services = True
+            continue
+        if not in_services:
+            continue
+
+        if line.startswith("  ") and line.endswith(":") and not line.startswith("    "):
+            current = line.strip().rstrip(":")
+            blocks[current] = []
+            continue
+
+        if current is None:
+            continue
+
+        if line.startswith("    "):
+            blocks[current].append(line.strip())
+            continue
+
+        if line.strip() and not line.startswith(" "):
+            break
+    return blocks
+
+
 def run_first_line(command):
     try:
         completed = subprocess.run(
@@ -101,6 +130,28 @@ def check_fingerprint(path):
     print("Fingerprint check passed")
 
 
+def check_limits(compose_path):
+    if not compose_path.exists():
+        raise SystemExit(f"Compose file not found: {compose_path}")
+
+    compose_text = compose_path.read_text(encoding="utf-8")
+    service_blocks = parse_service_blocks(compose_text)
+    if not service_blocks:
+        raise SystemExit("No service blocks found under services:")
+
+    missing = []
+    for service, entries in service_blocks.items():
+        has_cpu = any(item.startswith("cpus:") and item.split(":", 1)[1].strip() for item in entries)
+        has_mem = any(item.startswith("mem_limit:") and item.split(":", 1)[1].strip() for item in entries)
+        if not has_cpu or not has_mem:
+            missing.append(service)
+
+    if missing:
+        raise SystemExit("Missing cpu/memory limits for services: " + ", ".join(sorted(missing)))
+
+    print("Docker limits check passed")
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Benchmark environment metadata helpers")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -110,6 +161,9 @@ def parse_args():
 
     check = sub.add_parser("check-fingerprint", help="Validate fingerprint file")
     check.add_argument("--file", required=True, type=Path)
+
+    limits = sub.add_parser("check-limits", help="Validate docker-compose cpu/memory limits")
+    limits.add_argument("--compose", required=True, type=Path)
 
     return parser.parse_args()
 
@@ -121,6 +175,9 @@ def main():
         return
     if args.cmd == "check-fingerprint":
         check_fingerprint(args.file)
+        return
+    if args.cmd == "check-limits":
+        check_limits(args.compose)
         return
     raise SystemExit(f"Unknown command: {args.cmd}")
 
