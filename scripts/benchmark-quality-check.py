@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+RESULTS_ROOT = (REPO_ROOT / "results" / "latest").resolve()
 RAW_DIR = REPO_ROOT / "results" / "latest" / "raw"
 QUALITY_SUMMARY_FILE = REPO_ROOT / "results" / "latest" / "benchmark-quality-summary.json"
 POLICY_FILE = REPO_ROOT / "stats-policy.yaml"
@@ -49,6 +50,13 @@ def get_path_value(data, dotted_path):
             return None
         current = current[part]
     return current
+
+
+def ensure_under_results(path, label):
+    resolved = path.resolve()
+    if resolved == RESULTS_ROOT or RESULTS_ROOT in resolved.parents:
+        return resolved
+    raise SystemExit(f"{label} must be under {RESULTS_ROOT}: {resolved}")
 
 
 def check_stats(args, policy):
@@ -165,17 +173,18 @@ def check_variance(args, policy):
     if summary["targets_failed"] > 0:
         summary["status"] = "failed"
 
-    args.summary_file.parent.mkdir(parents=True, exist_ok=True)
-    args.summary_file.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    summary_path = ensure_under_results(args.summary_file, "Summary file")
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
 
     if summary["targets_checked"] == 0:
         print("benchmark-variance-check: no successful targets to validate (all skipped)")
-        print(f"benchmark-variance-check: wrote summary {args.summary_file}")
+        print(f"benchmark-variance-check: wrote summary {summary_path}")
         return summary
 
     if summary["status"] == "failed":
         first = summary["failures"][0]["message"]
-        print(f"benchmark-variance-check: wrote summary {args.summary_file}")
+        print(f"benchmark-variance-check: wrote summary {summary_path}")
         raise SystemExit(f"benchmark-variance-check failed: {first}")
 
     print(
@@ -183,7 +192,7 @@ def check_variance(args, policy):
         f"validated {summary['targets_checked']} successful target(s); "
         f"excluded sample records={sum(len(t['excluded_samples']) for t in summary['targets'])}"
     )
-    print(f"benchmark-variance-check: wrote summary {args.summary_file}")
+    print(f"benchmark-variance-check: wrote summary {summary_path}")
     return summary
 
 
@@ -339,9 +348,10 @@ def run_ci_check(args, policy):
         or benchstat_summary.get("status") == "failed"
     ):
         ci_summary["status"] = "failed"
-    args.summary_file.parent.mkdir(parents=True, exist_ok=True)
-    args.summary_file.write_text(json.dumps(ci_summary, indent=2) + "\n", encoding="utf-8")
-    print(f"ci-benchmark-quality-check: wrote summary {args.summary_file}")
+    summary_path = ensure_under_results(args.summary_file, "Summary file")
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text(json.dumps(ci_summary, indent=2) + "\n", encoding="utf-8")
+    print(f"ci-benchmark-quality-check: wrote summary {summary_path}")
 
 
 def parse_args():
