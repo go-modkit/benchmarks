@@ -18,6 +18,9 @@ REQUIRED_VERSION_FIELDS = [
     "docker_compose",
 ]
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+RESULTS_ROOT = (REPO_ROOT / "results" / "latest").resolve()
+
 
 def parse_service_blocks(compose_text):
     in_services = False
@@ -91,7 +94,15 @@ def ensure_parent(path):
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
+def ensure_under_results(path):
+    resolved = path.resolve()
+    if resolved == RESULTS_ROOT or RESULTS_ROOT in resolved.parents:
+        return
+    raise SystemExit(f"Refusing path outside results/latest: {path}")
+
+
 def write_json(path, payload):
+    ensure_under_results(path)
     ensure_parent(path)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
@@ -214,6 +225,22 @@ def check_manifest(path):
         raise SystemExit("Missing artifacts object")
     require_non_empty_string(artifacts, "raw_dir")
     require_non_empty_string(artifacts, "fingerprint_file")
+
+    fingerprint = payload.get("fingerprint")
+    if not isinstance(fingerprint, dict):
+        raise SystemExit("Missing fingerprint object")
+
+    versions = fingerprint.get("versions")
+    if not isinstance(versions, dict):
+        raise SystemExit("Missing fingerprint versions object")
+    for key in REQUIRED_VERSION_FIELDS:
+        require_non_empty_string(versions, key)
+
+    git = fingerprint.get("git")
+    if not isinstance(git, dict):
+        raise SystemExit("Missing fingerprint git object")
+    require_non_empty_string(git, "commit")
+    require_non_empty_string(git, "branch")
 
     targets = payload.get("targets")
     if not isinstance(targets, list):
