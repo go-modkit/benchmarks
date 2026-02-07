@@ -1,4 +1,12 @@
 # Generated benchmark artifacts
-results/latest/raw/*.json
-results/latest/summary.json
-results/latest/report.md
+results/latest/**
+!results/latest/.gitkeep
+
+# Local coverage outputs
+coverage.out
+.coverage*
+*.coverprofile
+
+# Python cache/bytecode
+**/__pycache__/
+*.py[cod]
