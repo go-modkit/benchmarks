@@ -10,14 +10,7 @@ manifest_file="${MANIFEST_FILE:-$results_dir/environment.manifest.json}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
 results_root="$repo_root/results/latest"
-
-resolve_path() {
-  python3 - <<'PY' "$1"
-from pathlib import Path
-import sys
-print(Path(sys.argv[1]).resolve())
-PY
-}
+source "$script_dir/lib.sh"
 
 results_root_abs="$(resolve_path "$results_root")"
 raw_dir_abs="$(resolve_path "$raw_dir")"
@@ -25,37 +18,10 @@ results_dir_abs="$(resolve_path "$results_dir")"
 fingerprint_file_abs="$(resolve_path "$fingerprint_file")"
 manifest_file_abs="$(resolve_path "$manifest_file")"
 
-case "$raw_dir_abs" in
-  "$results_root_abs"|"$results_root_abs"/*) ;;
-  *)
-    echo "RESULTS_RAW_DIR must be under $results_root_abs (got: $raw_dir_abs)" >&2
-    exit 1
-    ;;
-esac
-
-case "$results_dir_abs" in
-  "$results_root_abs"|"$results_root_abs"/*) ;;
-  *)
-    echo "RESULTS_DIR must be under $results_root_abs (got: $results_dir_abs)" >&2
-    exit 1
-    ;;
-esac
-
-case "$fingerprint_file_abs" in
-  "$results_root_abs"|"$results_root_abs"/*) ;;
-  *)
-    echo "FINGERPRINT_FILE must be under $results_root_abs (got: $fingerprint_file_abs)" >&2
-    exit 1
-    ;;
-esac
-
-case "$manifest_file_abs" in
-  "$results_root_abs"|"$results_root_abs"/*) ;;
-  *)
-    echo "MANIFEST_FILE must be under $results_root_abs (got: $manifest_file_abs)" >&2
-    exit 1
-    ;;
-esac
+ensure_path_under_root "RESULTS_RAW_DIR" "$raw_dir_abs" "$results_root_abs"
+ensure_path_under_root "RESULTS_DIR" "$results_dir_abs" "$results_root_abs"
+ensure_path_under_root "FINGERPRINT_FILE" "$fingerprint_file_abs" "$results_root_abs"
+ensure_path_under_root "MANIFEST_FILE" "$manifest_file_abs" "$results_root_abs"
 
 raw_dir="$raw_dir_abs"
 results_dir="$results_dir_abs"

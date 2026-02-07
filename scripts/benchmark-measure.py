@@ -13,6 +13,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from benchlib.io_utils import load_json_policy
+
 
 UNIT_TO_MB = {
     "b": 1 / (1024 * 1024),
@@ -179,11 +181,10 @@ def measure_hyperfine(repo_root, url, requests, runs):
 
 
 def load_policy(repo_root):
-    policy_file = repo_root / "stats-policy.yaml"
+    policy_file = repo_root / "stats-policy.json"
     if not policy_file.exists():
-        return {}
-    text = policy_file.read_text(encoding="utf-8")
-    return json.loads(text)
+        policy_file = repo_root / "stats-policy.yaml"
+    return load_json_policy(policy_file, default_on_missing={})
 
 
 def collect_docker_stats(framework):

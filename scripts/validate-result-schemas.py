@@ -3,6 +3,11 @@ import argparse
 import json
 from pathlib import Path
 
+try:
+    from jsonschema import Draft202012Validator
+except ImportError:  # pragma: no cover - exercised in environments without dependency
+    Draft202012Validator = None
+
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = ROOT / "results" / "latest" / "raw"
@@ -60,6 +65,22 @@ def validate_raw_row(path, payload, schema_version):
             raise SystemExit(f"Raw schema validation failed for {path}: benchmark.{metric_field} is required")
 
 
+def validate_jsonschema(payload, schema, path, artifact_label):
+    if Draft202012Validator is None:
+        raise SystemExit(
+            "jsonschema dependency is required for schema validation. Install with: python3 -m pip install jsonschema"
+        )
+
+    validator = Draft202012Validator(schema)
+    errors = sorted(validator.iter_errors(payload), key=lambda err: list(err.path))
+    if not errors:
+        return
+    first = errors[0]
+    path_suffix = ".".join(str(part) for part in first.path)
+    field = f" ({path_suffix})" if path_suffix else ""
+    raise SystemExit(f"{artifact_label} JSON Schema validation failed for {path}{field}: {first.message}")
+
+
 def validate_raw(raw_dir, schema_path):
     schema = load_json(schema_path)
     schema_version = (schema.get("properties") or {}).get("schema_version", {}).get("const")
@@ -72,6 +93,7 @@ def validate_raw(raw_dir, schema_path):
 
     for path in files:
         payload = load_json(path)
+        validate_jsonschema(payload, schema, path, "Raw")
         validate_raw_row(path, payload, schema_version)
 
     print(f"benchmark-raw-schema-check: validated {len(files)} raw artifact(s)")
@@ -87,6 +109,7 @@ def validate_summary(summary_file, schema_path):
         raise SystemExit(f"Summary file not found: {summary_file}")
 
     payload = load_json(summary_file)
+    validate_jsonschema(payload, schema, summary_file, "Summary")
     required = (
         "schema_version",
         "generated_at",
