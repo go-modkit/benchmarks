@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import re
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = REPO_ROOT / "results" / "latest" / "raw"
 QUALITY_SUMMARY_FILE = REPO_ROOT / "results" / "latest" / "benchmark-quality-summary.json"
+POLICY_FILE = REPO_ROOT / "stats-policy.yaml"
+TOOLING_DIR = REPO_ROOT / "results" / "latest" / "tooling"
 
 
 def load_raw_rows(raw_dir):
@@ -23,35 +29,44 @@ def load_raw_rows(raw_dir):
     return rows
 
 
+def load_policy(path):
+    if not path.exists():
+        raise SystemExit(f"Policy file not found: {path}")
+    text = path.read_text(encoding="utf-8")
+    return json.loads(text)
+
+
 def ensure_number(value, label):
     if isinstance(value, (int, float)):
         return float(value)
     raise SystemExit(f"Invalid or missing numeric field: {label}")
 
 
-def check_stats(args):
+def get_path_value(data, dotted_path):
+    current = data
+    for part in dotted_path.split("."):
+        if not isinstance(current, dict) or part not in current:
+            return None
+        current = current[part]
+    return current
+
+
+def check_stats(args, policy):
     rows = load_raw_rows(args.raw_dir)
     checked = 0
+    quality_policy = policy.get("quality") or {}
+    required_metrics = quality_policy.get("required_metrics") or []
+    expected_units = quality_policy.get("metric_units") or {}
 
     for path, row in rows:
         if row.get("status") != "ok":
             continue
 
         checked += 1
-        median = ((row.get("benchmark") or {}).get("median") or {})
-        ensure_number(median.get("rps"), f"{path}: benchmark.median.rps")
-        ensure_number(median.get("latency_ms_p50"), f"{path}: benchmark.median.latency_ms_p50")
-        ensure_number(median.get("latency_ms_p95"), f"{path}: benchmark.median.latency_ms_p95")
-        ensure_number(median.get("latency_ms_p99"), f"{path}: benchmark.median.latency_ms_p99")
+        for metric_path in required_metrics:
+            ensure_number(get_path_value(row, metric_path), f"{path}: {metric_path}")
 
         units = row.get("metric_units") or {}
-        expected_units = {
-            "throughput": "requests_per_second",
-            "latency": "milliseconds",
-            "memory": "mb",
-            "cpu": "percent",
-            "startup": "milliseconds",
-        }
         for key, expected in expected_units.items():
             value = units.get(key)
             if value != expected:
@@ -74,10 +89,14 @@ def check_stats(args):
     print(f"benchmark-stats-check: validated {checked} successful target(s)")
 
 
-def check_variance(args):
+def check_variance(args, policy):
     rows = load_raw_rows(args.raw_dir)
+    quality_policy = policy.get("quality") or {}
+    thresholds = quality_policy.get("variance_thresholds_cv") or {}
+
     summary = {
         "status": "passed",
+        "mode": "policy+variance",
         "targets_checked": 0,
         "targets_failed": 0,
         "failures": [],
@@ -90,8 +109,6 @@ def check_variance(args):
 
         quality = ((row.get("benchmark") or {}).get("quality") or {})
         variance = quality.get("variance") or {}
-        policy = quality.get("policy") or {}
-        thresholds = policy.get("variance_thresholds_cv") or {}
         excluded_samples = quality.get("excluded_samples") or []
 
         framework = row.get("framework") or path.stem
@@ -123,10 +140,7 @@ def check_variance(args):
             value = variance.get(variance_key)
             threshold = thresholds.get(threshold_key)
             value_num = ensure_number(value, f"{path}: benchmark.quality.variance.{variance_key}")
-            threshold_num = ensure_number(
-                threshold,
-                f"{path}: benchmark.quality.policy.variance_thresholds_cv.{threshold_key}",
-            )
+            threshold_num = ensure_number(threshold, f"policy.quality.variance_thresholds_cv.{threshold_key}")
             if value_num > threshold_num:
                 target_result["violations"].append(
                     {
@@ -157,7 +171,7 @@ def check_variance(args):
     if summary["targets_checked"] == 0:
         print("benchmark-variance-check: no successful targets to validate (all skipped)")
         print(f"benchmark-variance-check: wrote summary {args.summary_file}")
-        return
+        return summary
 
     if summary["status"] == "failed":
         first = summary["failures"][0]["message"]
@@ -170,37 +184,196 @@ def check_variance(args):
         f"excluded sample records={sum(len(t['excluded_samples']) for t in summary['targets'])}"
     )
     print(f"benchmark-variance-check: wrote summary {args.summary_file}")
+    return summary
+
+
+def write_benchstat_input(path, framework, run_stats):
+    lines = []
+    for index, run in enumerate(run_stats, start=1):
+        rps = ensure_number(run.get("rps"), f"{framework}: benchmark.run_stats[{index}].rps")
+        ns_per_op = 1_000_000_000.0 / rps
+        lines.append(f"Benchmark{framework}-8 {index} {ns_per_op:.0f} ns/op")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def parse_delta_percent(output):
+    percent_matches = re.findall(r"([+-]?[0-9]+(?:\.[0-9]+)?)%", output)
+    if not percent_matches:
+        return None
+    return float(percent_matches[-1])
+
+
+def check_benchstat(args, policy):
+    quality_policy = policy.get("quality") or {}
+    benchstat_policy = quality_policy.get("benchstat") or {}
+    if not benchstat_policy.get("enabled", False):
+        print("benchmark-benchstat-check: disabled by policy")
+        return {"status": "skipped", "reason": "disabled"}
+
+    benchstat_bin = shutil.which("benchstat")
+    if benchstat_bin is None:
+        gopath = subprocess.run(
+            ["go", "env", "GOPATH"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if gopath.returncode == 0:
+            candidate = Path(gopath.stdout.strip()) / "bin" / "benchstat"
+            if candidate.exists():
+                benchstat_bin = str(candidate)
+    if benchstat_bin is None:
+        raise SystemExit("benchmark-benchstat-check: benchstat not found in PATH")
+
+    rows = load_raw_rows(args.raw_dir)
+    by_framework = {
+        (row.get("framework") or path.stem): row
+        for path, row in rows
+        if row.get("status") == "ok"
+    }
+
+    baseline_framework = benchstat_policy.get("baseline_framework", "baseline")
+    baseline = by_framework.get(baseline_framework)
+    if baseline is None:
+        print("benchmark-benchstat-check: baseline framework not present in successful targets")
+        return {"status": "skipped", "reason": "baseline_missing"}
+
+    max_regression = ensure_number(
+        ((benchstat_policy.get("max_regression_percent") or {}).get("ns_per_op")),
+        "policy.quality.benchstat.max_regression_percent.ns_per_op",
+    )
+
+    TOOLING_DIR.mkdir(parents=True, exist_ok=True)
+    benchstat_dir = TOOLING_DIR / "benchstat"
+    benchstat_dir.mkdir(parents=True, exist_ok=True)
+
+    summary = {
+        "status": "passed",
+        "baseline_framework": baseline_framework,
+        "max_regression_percent": max_regression,
+        "comparisons": [],
+        "failures": [],
+    }
+
+    with tempfile.TemporaryDirectory(prefix="benchstat-", dir=benchstat_dir) as temp_dir:
+        temp_root = Path(temp_dir)
+        baseline_file = temp_root / f"{baseline_framework}.txt"
+        write_benchstat_input(
+            baseline_file,
+            baseline_framework,
+            ((baseline.get("benchmark") or {}).get("run_stats") or []),
+        )
+
+        for framework, row in sorted(by_framework.items()):
+            if framework == baseline_framework:
+                continue
+
+            current_file = temp_root / f"{framework}.txt"
+            write_benchstat_input(
+                current_file,
+                framework,
+                ((row.get("benchmark") or {}).get("run_stats") or []),
+            )
+
+            completed = subprocess.run(
+                [benchstat_bin, str(baseline_file), str(current_file)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if completed.returncode != 0:
+                raise SystemExit(f"benchstat failed for {framework}: {completed.stderr.strip()}")
+
+            output_text = completed.stdout.strip() + "\n"
+            out_file = benchstat_dir / f"{framework}.txt"
+            out_file.write_text(output_text, encoding="utf-8")
+
+            delta = parse_delta_percent(output_text)
+            comparison = {
+                "framework": framework,
+                "baseline": baseline_framework,
+                "delta_percent_ns_per_op": delta,
+                "output_file": str(out_file.relative_to(REPO_ROOT)),
+                "status": "passed",
+            }
+            if delta is None:
+                comparison["status"] = "failed"
+                comparison["reason"] = "delta_parse_failed"
+                summary["failures"].append(f"{framework}: unable to parse benchstat delta")
+            elif delta > max_regression:
+                comparison["status"] = "failed"
+                comparison["reason"] = (
+                    f"delta {delta:.2f}% exceeded max regression {max_regression:.2f}%"
+                )
+                summary["failures"].append(
+                    f"{framework}: ns/op regression {delta:.2f}% > {max_regression:.2f}%"
+                )
+
+            summary["comparisons"].append(comparison)
+
+    if summary["failures"]:
+        summary["status"] = "failed"
+        raise SystemExit("benchmark-benchstat-check failed: " + summary["failures"][0])
+
+    print(
+        "benchmark-benchstat-check: "
+        f"validated {len(summary['comparisons'])} framework comparison(s) against {baseline_framework}"
+    )
+    return summary
+
+
+def run_ci_check(args, policy):
+    check_stats(args, policy)
+    variance_summary = check_variance(args, policy)
+    benchstat_summary = check_benchstat(args, policy)
+    ci_summary = {
+        "status": "passed",
+        "policy_file": str(args.policy_file),
+        "checks": {
+            "variance": variance_summary,
+            "benchstat": benchstat_summary,
+        },
+    }
+    if (
+        variance_summary.get("status") == "failed"
+        or benchstat_summary.get("status") == "failed"
+    ):
+        ci_summary["status"] = "failed"
+    args.summary_file.parent.mkdir(parents=True, exist_ok=True)
+    args.summary_file.write_text(json.dumps(ci_summary, indent=2) + "\n", encoding="utf-8")
+    print(f"ci-benchmark-quality-check: wrote summary {args.summary_file}")
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Benchmark quality checks")
-    parser.add_argument(
-        "--raw-dir",
-        type=Path,
-        default=RAW_DIR,
-        help="Directory with per-framework raw benchmark JSON files",
-    )
-    parser.add_argument(
-        "--summary-file",
-        type=Path,
-        default=QUALITY_SUMMARY_FILE,
-        help="Output JSON summary file for quality checks",
-    )
+    parser.add_argument("--raw-dir", type=Path, default=RAW_DIR)
+    parser.add_argument("--summary-file", type=Path, default=QUALITY_SUMMARY_FILE)
+    parser.add_argument("--policy-file", type=Path, default=POLICY_FILE)
 
     sub = parser.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("stats-check", help="Validate aggregate benchmark statistic fields")
-    sub.add_parser("variance-check", help="Validate variance policy and outlier recording")
+    sub.add_parser("stats-check")
+    sub.add_parser("variance-check")
+    sub.add_parser("benchstat-check")
+    sub.add_parser("ci-check")
 
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
+    policy = load_policy(args.policy_file)
+
     if args.cmd == "stats-check":
-        check_stats(args)
+        check_stats(args, policy)
         return
     if args.cmd == "variance-check":
-        check_variance(args)
+        check_variance(args, policy)
+        return
+    if args.cmd == "benchstat-check":
+        check_benchstat(args, policy)
+        return
+    if args.cmd == "ci-check":
+        run_ci_check(args, policy)
         return
     raise SystemExit(f"Unknown command: {args.cmd}")
 

@@ -4,6 +4,9 @@
 
 - targets available locally or via Docker Compose
 - parity contract fixtures up to date
+- benchmark quality tools installed locally:
+  - `hyperfine` (for `BENCH_ENGINE=hyperfine`)
+  - `benchstat` (`go install golang.org/x/perf/cmd/benchstat@latest`)
 
 ## Standard run
 
@@ -20,6 +23,12 @@ make benchmark-nestjs
 ```
 
 Per-target runs also emit `results/latest/environment.fingerprint.json` and `results/latest/environment.manifest.json`.
+
+Optional OSS measurement engine:
+
+```bash
+BENCH_ENGINE=hyperfine make benchmark
+```
 
 ## Docker resource limits
 
@@ -45,6 +54,19 @@ Benchmark scripts must run parity first for each target. If parity fails, skip b
 - `results/latest/environment.manifest.json` - timestamped runner metadata and result index
 - `results/latest/summary.json` - normalized summary
 - `results/latest/report.md` - markdown report
+- `results/latest/benchmark-quality-summary.json` - policy quality gate output
+- `results/latest/tooling/benchstat/*.txt` - benchstat comparison outputs
+
+## Quality checks
+
+```bash
+make benchmark-stats-check
+make benchmark-variance-check
+make benchmark-benchstat-check
+make ci-benchmark-quality-check
+```
+
+Quality thresholds and required metrics are versioned in `stats-policy.yaml`.
 
 ## Reproducibility notes
 

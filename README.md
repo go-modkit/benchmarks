@@ -21,7 +21,21 @@ Run benchmark orchestration and generate a report:
 ```bash
 make benchmark
 make report
+make ci-benchmark-quality-check
 ```
+
+Use OSS measurement engine (optional):
+
+```bash
+BENCH_ENGINE=hyperfine make benchmark
+```
+
+## Tooling prerequisites
+
+- Go (for `go test` and `benchstat`)
+- Python 3
+- hyperfine (optional benchmark engine)
+- benchstat (`go install golang.org/x/perf/cmd/benchstat@latest`)
 
 ## Repository layout
 

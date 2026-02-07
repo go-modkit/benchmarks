@@ -20,24 +20,34 @@
 - Docker + Docker Compose for service orchestration
 - Go parity runner (`cmd/parity-test`)
 - shell scripts in `scripts/` for orchestration
-- Python 3 report generator (`scripts/generate-report.py`)
+- `hyperfine` benchmark engine (optional via `BENCH_ENGINE=hyperfine`)
+- `benchstat` statistical comparison for quality gates
+- policy file: `stats-policy.yaml`
+- Python 3 report and normalization tooling in `scripts/`
 
 ## Baseline benchmark profile
 
-- warmup requests: 1000
-- request threads: 12
-- concurrent connections: 400
-- run duration: 30s
+- warmup requests: 100 (legacy engine path)
+- benchmark requests per run: 300
 - runs per target: 3 (median reported)
+
+## Quality policy
+
+- thresholds and required metrics are defined in `stats-policy.yaml`
+- `make ci-benchmark-quality-check` enforces policy locally and in CI
+- benchstat comparisons are evaluated against policy baseline framework (`baseline` by default)
 
 ## Reporting
 
 - raw run outputs: `results/latest/raw/`
 - normalized summary: `results/latest/summary.json`
 - markdown report: `results/latest/report.md`
+- quality summary: `results/latest/benchmark-quality-summary.json`
+- optional tool artifacts: `results/latest/tooling/benchstat/*.txt`
 
 ## Interpretation guidance
 
 - treat parity failures as correctness blockers, not performance regressions
 - compare medians first, then inspect distribution variance
+- use benchstat deltas and policy thresholds for pass/fail interpretation
 - annotate environment drift (host type, CPU, memory, Docker version) in report notes
