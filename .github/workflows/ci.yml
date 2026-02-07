@@ -11,6 +11,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  codeql:
+    name: CodeQL analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: go
+      - uses: github/codeql-action/autobuild@v4
+      - uses: github/codeql-action/analyze@v4
+
   pr-title:
     name: Validate PR title
     if: github.event_name == 'pull_request'
@@ -62,6 +77,12 @@ jobs:
         run: make benchmark-schema-validate
       - name: Run statistical quality gate
         run: make ci-benchmark-quality-check
+      - name: Validate publication disclaimer policy
+        run: make report-disclaimer-check
+      - name: Validate methodology changelog policy
+        run: make methodology-changelog-check
+      - name: Validate README/report publication sync
+        run: make publication-sync-check
       - name: Upload benchmark quality summary
         uses: actions/upload-artifact@v4
         with:

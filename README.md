@@ -62,6 +62,18 @@ benchmarks/
 - fixture contract is source-of-truth for expected API behavior
 - matcher changes require fixture updates and design doc updates
 
+## Publication policy
+
+- latest-results source of truth: `results/latest/summary.json` and `results/latest/report.md`
+- report and summary are generated from `results/latest/raw/*.json` via `python3 scripts/generate-report.py`
+- README must not publish standalone benchmark numbers; publication references must point to generated artifacts
+
+### Fairness disclaimer (publication-wide)
+
+- Language-vs-framework caveat: cross-language comparisons include runtime/ecosystem effects and are not framework-only deltas
+- Cross-language interpretation must be treated as directional evidence, not absolute winner claims
+- Parity failures invalidate performance interpretation until correctness is restored
+
 ## Documentation
 
 - `docs/design/002-api-parity-contract.md` - parity contract rationale

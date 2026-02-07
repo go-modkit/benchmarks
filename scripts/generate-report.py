@@ -114,6 +114,17 @@ def write_report(summary):
     lines.extend(
         [
             "",
+            "## Fairness Disclaimer",
+            "",
+            "- Language-vs-framework caveat: cross-language results include runtime and ecosystem effects and must not be treated as framework-only deltas.",
+            "- Cross-language baseline: compare implementations with equivalent API behavior, workload profile, and environment constraints before drawing conclusions.",
+            "",
+            "## Anti-Misinterpretation Guidance",
+            "",
+            "- Do not rank frameworks across languages as absolute winners; use results as scenario-specific signals.",
+            "- Treat large cross-language deltas as prompts for deeper profiling (runtime, I/O, GC, and dependency effects), not as standalone product claims.",
+            "- Parity failures invalidate performance interpretation until correctness is restored.",
+            "",
             "## Raw Artifacts",
             "",
             "- Raw JSON: `results/latest/raw/*.json`",
