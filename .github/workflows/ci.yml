@@ -62,6 +62,12 @@ jobs:
         run: make benchmark-schema-validate
       - name: Run statistical quality gate
         run: make ci-benchmark-quality-check
+      - name: Validate publication disclaimer policy
+        run: make report-disclaimer-check
+      - name: Validate methodology changelog policy
+        run: make methodology-changelog-check
+      - name: Validate README/report publication sync
+        run: make publication-sync-check
       - name: Upload benchmark quality summary
         uses: actions/upload-artifact@v4
         with:

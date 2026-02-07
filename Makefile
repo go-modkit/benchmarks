@@ -5,7 +5,7 @@ GOPATH ?= $(shell $(GO) env GOPATH)
 GO_PATCH_COVER ?= $(GOPATH)/bin/go-patch-cover
 MODULES = $(shell find . -type f -name "go.mod" -not -path "*/.*/*" -not -path "*/vendor/*" -exec dirname {} \;)
 
-.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test test-coverage test-patch-coverage tools parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-raw-schema-check benchmark-summary-schema-check benchmark-schema-validate benchmark-stats-check benchmark-variance-check benchmark-benchstat-check ci-benchmark-quality-check workflow-concurrency-check workflow-budget-check workflow-inputs-check report-disclaimer-check methodology-changelog-check
+.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test test-coverage test-patch-coverage tools parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-raw-schema-check benchmark-summary-schema-check benchmark-schema-validate benchmark-stats-check benchmark-variance-check benchmark-benchstat-check ci-benchmark-quality-check workflow-concurrency-check workflow-budget-check workflow-inputs-check report-disclaimer-check methodology-changelog-check publication-sync-check
 
 benchmark:
 	bash scripts/run-all.sh
@@ -105,6 +105,9 @@ report-disclaimer-check:
 
 methodology-changelog-check:
 	$(PYTHON) scripts/publication-policy-check.py methodology-changelog-check
+
+publication-sync-check:
+	$(PYTHON) scripts/publication-policy-check.py publication-sync-check
 
 workflow-concurrency-check:
 	$(PYTHON) scripts/workflow-policy-check.py concurrency-check

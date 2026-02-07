@@ -78,6 +78,9 @@ make benchmark-stats-check
 make benchmark-variance-check
 make benchmark-benchstat-check
 make ci-benchmark-quality-check
+make report-disclaimer-check
+make methodology-changelog-check
+make publication-sync-check
 ```
 
 Quality thresholds and required metrics are versioned in `stats-policy.yaml`.
