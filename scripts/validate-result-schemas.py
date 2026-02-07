@@ -12,8 +12,11 @@ SUMMARY_SCHEMA = ROOT / "schemas" / "benchmark-summary-v1.schema.json"
 
 
 def load_json(path):
-    with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            return json.load(handle)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Malformed JSON in {path}: {exc.msg} at line {exc.lineno}, column {exc.colno}") from exc
 
 
 def validate_raw_row(path, payload, schema_version):
