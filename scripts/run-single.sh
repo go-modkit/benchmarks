@@ -24,6 +24,22 @@ raw_dir="${RESULTS_RAW_DIR:-results/latest/raw}"
 mkdir -p "$raw_dir"
 out_file="$raw_dir/${framework}.json"
 
+metadata_managed="${BENCHMARK_METADATA_MANAGED:-0}"
+results_dir="${RESULTS_DIR:-$(dirname "$raw_dir")}"
+fingerprint_file="${FINGERPRINT_FILE:-$results_dir/environment.fingerprint.json}"
+manifest_file="${MANIFEST_FILE:-$results_dir/environment.manifest.json}"
+
+write_manifest() {
+  if [[ "$metadata_managed" == "1" ]]; then
+    return
+  fi
+  python3 scripts/environment-manifest.py write-manifest --raw-dir "$raw_dir" --fingerprint "$fingerprint_file" --out "$manifest_file"
+}
+
+if [[ "$metadata_managed" != "1" ]]; then
+  python3 scripts/environment-manifest.py collect-fingerprint --out "$fingerprint_file"
+fi
+
 if ! curl -fsS "$target/health" >/dev/null 2>&1; then
   python3 - <<'PY' "$framework" "$target" "$out_file"
 import json, sys
@@ -38,6 +54,7 @@ with open(out_file, "w", encoding="utf-8") as f:
     json.dump(payload, f, indent=2)
 print(f"SKIP {framework}: health endpoint unavailable")
 PY
+  write_manifest
   exit 0
 fi
 
@@ -57,6 +74,7 @@ with open(out_file, "w", encoding="utf-8") as f:
     json.dump(payload, f, indent=2)
 print(f"SKIP {framework}: parity failed")
 PY
+  write_manifest
   exit 0
 fi
 
@@ -186,3 +204,5 @@ with open(out_file, "w", encoding="utf-8") as f:
 
 print(f"OK {framework}: median_rps={median_rps:.2f} p50={median_p50:.2f}ms p95={median_p95:.2f}ms")
 PY
+
+write_manifest

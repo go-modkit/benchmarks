@@ -19,6 +19,8 @@ make benchmark-modkit
 make benchmark-nestjs
 ```
 
+Per-target runs also emit `results/latest/environment.fingerprint.json` and `results/latest/environment.manifest.json`.
+
 ## Docker resource limits
 
 Framework services use shared default limits from `docker-compose.yml`:
