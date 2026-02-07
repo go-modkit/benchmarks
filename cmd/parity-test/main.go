@@ -184,10 +184,8 @@ func runScenario(client *http.Client, base string, scenario Scenario) error {
 		}
 	}
 
-	if scenario.Response.Body != nil {
-		if ok, msg := compareValue(scenario.Response.Body, actualBody); !ok {
-			return fmt.Errorf("body mismatch: %s", msg)
-		}
+	if ok, msg := compareValue(scenario.Response.Body, actualBody); !ok {
+		return fmt.Errorf("body mismatch: %s", msg)
 	}
 
 	return nil
@@ -272,18 +270,36 @@ func matchStringValue(expected string, actual interface{}) bool {
 	if !ok {
 		return false
 	}
-	if strings.Contains(expected, "@any_number") || strings.Contains(expected, "@is_iso8601") {
-		pattern := regexp.QuoteMeta(expected)
-		pattern = strings.ReplaceAll(pattern, "\\@any_number", "\\d+")
-		pattern = strings.ReplaceAll(pattern, "\\@is_iso8601", ".+")
-		re := regexp.MustCompile("^" + pattern + "$")
-		if re.MatchString(actStr) {
-			if strings.Contains(expected, "@is_iso8601") {
-				return isISO8601(actStr)
+	tokenRe := regexp.MustCompile(`@any_number|@is_iso8601`)
+	if tokenRe.MatchString(expected) {
+		tokens := tokenRe.FindAllString(expected, -1)
+		parts := tokenRe.Split(expected, -1)
+		var pattern strings.Builder
+		checks := make([]func(string) bool, 0, len(tokens))
+		for i, part := range parts {
+			pattern.WriteString(regexp.QuoteMeta(part))
+			if i < len(tokens) {
+				switch tokens[i] {
+				case "@any_number":
+					pattern.WriteString(`(-?\d+(?:\.\d+)?)`)
+					checks = append(checks, func(value string) bool { return isNumber(value) })
+				case "@is_iso8601":
+					pattern.WriteString(`(.+)`)
+					checks = append(checks, func(value string) bool { return isISO8601(value) })
+				}
 			}
-			return true
 		}
-		return false
+		re := regexp.MustCompile("^" + pattern.String() + "$")
+		matches := re.FindStringSubmatch(actStr)
+		if matches == nil {
+			return false
+		}
+		for idx, check := range checks {
+			if !check(matches[idx+1]) {
+				return false
+			}
+		}
+		return true
 	}
 	return expected == actStr
 }
@@ -294,7 +310,7 @@ func isNumber(value interface{}) bool {
 	case float64, float32, int, int64, json.Number:
 		return true
 	case string:
-		match, _ := regexp.MatchString(`^-?\\d+(\\.\\d+)?$`, value.(string))
+		match, _ := regexp.MatchString(`^-?\d+(\.\d+)?$`, value.(string))
 		return match
 	default:
 		return false

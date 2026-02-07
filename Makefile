@@ -25,7 +25,7 @@ report:
 	python3 scripts/generate-report.py
 
 parity-check:
-	TARGET="${PARITY_TARGET}" bash scripts/parity-check.sh
+	TARGET="$(PARITY_TARGET)" bash scripts/parity-check.sh
 
 parity-check-modkit:
 	TARGET=http://localhost:3001 bash scripts/parity-check.sh
