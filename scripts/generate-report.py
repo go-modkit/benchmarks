@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import json
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -11,6 +13,13 @@ SUMMARY_PATH = RESULTS_LATEST / "summary.json"
 REPORT_PATH = RESULTS_LATEST / "report.md"
 
 
+def run_schema_check(command):
+    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    if completed.returncode != 0:
+        message = completed.stderr.strip() or completed.stdout.strip() or "schema validation failed"
+        raise SystemExit(message)
+
+
 def load_raw_files():
     if not RAW_DIR.exists():
         return []
@@ -18,7 +27,9 @@ def load_raw_files():
     for path in sorted(RAW_DIR.glob("*.json")):
         try:
             with path.open("r", encoding="utf-8") as f:
-                rows.append(json.load(f))
+                payload = json.load(f)
+                payload["_source_file"] = path.name
+                rows.append(payload)
         except json.JSONDecodeError as exc:
             print(f"Warning: skipping malformed JSON {path}: {exc}")
     return rows
@@ -27,6 +38,7 @@ def load_raw_files():
 def build_summary(rows):
     generated_at = datetime.now(timezone.utc).isoformat()
     summary = {
+        "schema_version": "summary-v1",
         "generated_at": generated_at,
         "total_targets": len(rows),
         "successful_targets": sum(1 for r in rows if r.get("status") == "ok"),
@@ -39,8 +51,18 @@ def build_summary(rows):
             "status": row.get("status"),
             "target": row.get("target"),
             "reason": row.get("reason"),
+            "provenance": {
+                "raw_source": f"results/latest/raw/{row.get('_source_file', 'unknown')}"
+            },
         }
         bench = row.get("benchmark") or {}
+        quality = (bench.get("quality") or {}).get("variance") or {}
+        if quality:
+            target["uncertainty"] = {
+                "rps_cv": quality.get("rps_cv"),
+                "latency_ms_p95_cv": quality.get("latency_ms_p95_cv"),
+                "latency_ms_p99_cv": quality.get("latency_ms_p99_cv"),
+            }
         median = bench.get("median") or {}
         if median:
             target["median"] = {
@@ -104,9 +126,11 @@ def write_report(summary):
 
 
 def main():
+    run_schema_check([sys.executable, "scripts/validate-result-schemas.py", "raw-check"])
     rows = load_raw_files()
     summary = build_summary(rows)
     write_summary(summary)
+    run_schema_check([sys.executable, "scripts/validate-result-schemas.py", "summary-check"])
     write_report(summary)
     print(f"Wrote: {SUMMARY_PATH}")
     print(f"Wrote: {REPORT_PATH}")

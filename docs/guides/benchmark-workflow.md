@@ -13,6 +13,7 @@
 ```bash
 make benchmark
 make report
+make benchmark-schema-validate
 ```
 
 ## Per-target run
@@ -56,10 +57,13 @@ Benchmark scripts must run parity first for each target. If parity fails, skip b
 - `results/latest/report.md` - markdown report
 - `results/latest/benchmark-quality-summary.json` - policy quality gate output
 - `results/latest/tooling/benchstat/*.txt` - benchstat comparison outputs
+- `schemas/benchmark-raw-v1.schema.json` - raw benchmark artifact contract
+- `schemas/benchmark-summary-v1.schema.json` - summary artifact contract
 
 ## Quality checks
 
 ```bash
+make benchmark-schema-validate
 make benchmark-stats-check
 make benchmark-variance-check
 make benchmark-benchstat-check

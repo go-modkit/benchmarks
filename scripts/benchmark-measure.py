@@ -241,6 +241,7 @@ def main():
 
     if not run_stats:
         payload = {
+            "schema_version": "raw-v1",
             "framework": args.framework,
             "target": args.target,
             "status": "skipped",
@@ -279,6 +280,7 @@ def main():
     docker_stats = collect_docker_stats(args.framework)
 
     payload = {
+        "schema_version": "raw-v1",
         "framework": args.framework,
         "target": args.target,
         "status": "ok",

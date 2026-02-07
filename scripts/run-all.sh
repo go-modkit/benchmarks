@@ -71,6 +71,8 @@ for framework in "${frameworks[@]}"; do
   BENCHMARK_METADATA_MANAGED=1 bash scripts/run-single.sh "$framework"
 done
 
+python3 scripts/validate-result-schemas.py raw-check --raw-dir "$raw_dir"
+
 python3 scripts/environment-manifest.py write-manifest --raw-dir "$raw_dir" --fingerprint "$fingerprint_file" --out "$manifest_file"
 
 echo "Raw benchmark files generated in: $raw_dir"

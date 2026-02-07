@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://go-modkit.dev/schemas/benchmark-raw-v1.schema.json",
+  "title": "Benchmark Raw Result v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "framework",
+    "target",
+    "status"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "const": "raw-v1"
+    },
+    "framework": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "skipped"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "parity": {
+      "type": "string"
+    },
+    "engine": {
+      "type": "string"
+    },
+    "metric_units": {
+      "type": "object"
+    },
+    "benchmark": {
+      "type": "object",
+      "properties": {
+        "run_stats": {
+          "type": "array"
+        },
+        "median": {
+          "type": "object"
+        }
+      }
+    },
+    "docker": {
+      "type": "object"
+    },
+    "resources_normalized": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "parity",
+          "engine",
+          "metric_units",
+          "benchmark",
+          "resources_normalized"
+        ],
+        "properties": {
+          "benchmark": {
+            "required": [
+              "run_stats",
+              "median"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "skipped"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    }
+  ]
+}

@@ -96,6 +96,7 @@ if ! curl -fsS "$target/health" >/dev/null 2>&1; then
 import json, sys
 framework, target, out_file = sys.argv[1], sys.argv[2], sys.argv[3]
 payload = {
+    "schema_version": "raw-v1",
     "framework": framework,
     "target": target,
     "status": "skipped",
@@ -116,6 +117,7 @@ else
 import json, sys
 framework, target, out_file = sys.argv[1], sys.argv[2], sys.argv[3]
 payload = {
+    "schema_version": "raw-v1",
     "framework": framework,
     "target": target,
     "status": "skipped",
