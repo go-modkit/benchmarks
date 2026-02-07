@@ -38,7 +38,7 @@ results/latest/          benchmark outputs and generated report
 2. Run parity checks per target
 3. Run load benchmarks for parity-passing targets (`legacy` engine or `hyperfine`)
 4. Normalize and save raw outputs
-5. Run policy quality gates (`stats-policy.yaml` + benchstat)
+5. Run policy quality gates (`stats-policy.json` + benchstat)
 6. Build `summary.json`
 7. Generate `report.md`
 

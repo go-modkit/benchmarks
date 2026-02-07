@@ -10,6 +10,7 @@ coverage.out
 # Python cache/bytecode
 **/__pycache__/
 *.py[cod]
+.venv/
 
 # Local worktrees
 .worktrees/

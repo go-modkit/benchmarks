@@ -22,7 +22,7 @@
 - shell scripts in `scripts/` for orchestration
 - `hyperfine` benchmark engine (optional via `BENCH_ENGINE=hyperfine`)
 - `benchstat` statistical comparison for quality gates
-- policy file: `stats-policy.yaml`
+- policy file: `stats-policy.json` (`stats-policy.yaml` accepted for backward compatibility)
 - Python 3 report and normalization tooling in `scripts/`
 
 ## Baseline benchmark profile
@@ -33,7 +33,7 @@
 
 ## Quality policy
 
-- thresholds and required metrics are defined in `stats-policy.yaml`
+- thresholds and required metrics are defined in `stats-policy.json`
 - `make ci-benchmark-quality-check` enforces policy locally and in CI
 - benchstat comparisons are evaluated against policy baseline framework (`baseline` by default)
 - manual CI benchmark runs use bounded workflow inputs (`frameworks` subset, `runs` 1..10, `benchmark_requests` 50..1000)

@@ -16,9 +16,9 @@ Any public claim or report referencing benchmarks from this repository must incl
 - **Purpose**: Guarantees that the raw metrics and summaries adhere to the versioned data contract.
 
 ### 3. Quality Policy Compliance
-- **Requirement**: The run must pass `make ci-benchmark-quality-check` as defined in `stats-policy.yaml`.
+- **Requirement**: The run must pass `make ci-benchmark-quality-check` as defined in `stats-policy.json`.
 - **Metrics**: Must include at least RPS (median) and Latency (P50, P95, P99).
-- **Variance**: Coefficient of Variation (CV) must stay within the thresholds defined in `stats-policy.yaml` (e.g., <10% for RPS).
+- **Variance**: Coefficient of Variation (CV) must stay within the thresholds defined in `stats-policy.json` (e.g., <10% for RPS).
 
 ### 4. Parity and Skip Transparency
 - **Requirement**: Any target implementation that failed the parity gate must be disclosed as "Skipped (Parity Failure)".

@@ -16,6 +16,16 @@ This repository validates API parity and runs framework benchmarks. Keep changes
 - Go 1.25.7+
 - Docker + Docker Compose (for local service runs)
 - GNU Make
+- Python 3
+- `pytest` and `pytest-cov`
+- `bats` (bats-core)
+- `jsonschema` Python package
+
+Bootstrap local dependencies:
+
+```bash
+bash scripts/setup-dev-env.sh
+```
 
 ## Local validation
 
@@ -24,6 +34,7 @@ Run these before opening a PR:
 ```bash
 go test ./...
 make test-coverage
+make test-scripts
 TARGET=http://localhost:3001 bash scripts/parity-check.sh
 ```
 
@@ -43,6 +54,7 @@ If you changed benchmark artifacts or report generation, also run schema validat
 
 ```bash
 make benchmark-schema-validate
+make ci-benchmark-quality-check
 ```
 
 ## Pull request process
