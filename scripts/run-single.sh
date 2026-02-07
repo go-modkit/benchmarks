@@ -121,7 +121,11 @@ try:
         if not line.strip():
             continue
         parts = line.split("|", 2)
-        if len(parts) == 3 and framework in parts[0]:
+        if len(parts) == 3 and (
+            parts[0] == framework
+            or parts[0].startswith(framework + "-")
+            or parts[0].endswith("-" + framework)
+        ):
             docker_stats = {"container": parts[0], "memory": parts[1], "cpu": parts[2]}
             break
 except Exception:

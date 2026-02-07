@@ -20,6 +20,7 @@ test/fixtures/parity/
 ```
 
 ## WHERE TO LOOK
+
 | Task | Location | Notes |
 |------|----------|-------|
 | Change baseline dataset | `test/fixtures/parity/seed.json` | Sent to seed endpoint before scenarios |
@@ -28,6 +29,7 @@ test/fixtures/parity/
 | Adjust update contracts | `test/fixtures/parity/scenarios/users-update.json` | Mutation behavior and error shape checks |
 | Adjust delete contracts | `test/fixtures/parity/scenarios/users-delete.json` | Deletion idempotency/not-found behavior |
 | Health contract | `test/fixtures/parity/scenarios/health.json` | Minimal service readiness check |
+
 
 ## CONVENTIONS
 - Each file is a JSON array of scenarios with `name`, `request`, and `response` blocks.

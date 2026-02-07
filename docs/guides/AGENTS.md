@@ -8,11 +8,13 @@
 Operator-facing guides for parity contract usage, scenario authoring, and benchmark workflow.
 
 ## WHERE TO LOOK
+
 | Task | Location | Notes |
 |------|----------|-------|
 | Understand fixture semantics | `docs/guides/parity-contract.md` | Request/response schema and matcher tokens |
 | Add or modify scenarios safely | `docs/guides/adding-scenarios.md` | Endpoint-grouped workflow + checklist |
 | Run benchmark pipeline | `docs/guides/benchmark-workflow.md` | Standard, per-target, and artifact expectations |
+
 
 ## CONVENTIONS
 - Keep guides procedural and command-oriented.

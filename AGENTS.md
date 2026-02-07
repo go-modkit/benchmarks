@@ -23,6 +23,7 @@ benchmarks/
 ```
 
 ## WHERE TO LOOK
+
 | Task | Location | Notes |
 |------|----------|-------|
 | Run parity checks | `Makefile`, `scripts/parity-check.sh` | `PARITY_TARGET=... make parity-check` is canonical |
@@ -32,6 +33,7 @@ benchmarks/
 | Benchmark orchestration | `scripts/run-single.sh`, `scripts/run-all.sh` | Per-target parity gate then benchmark output emit |
 | Reporting | `scripts/generate-report.py`, `results/latest/` | Builds `summary.json` and `report.md` from raw JSON |
 | CI policy | `.github/workflows/ci.yml`, `.github/workflows/codeql.yml` | Semantic PR title check + Go tests + script smoke + CodeQL |
+
 
 ## CODE MAP
 LSP project views unavailable in this environment (`no views`).

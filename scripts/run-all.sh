@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-frameworks=(modkit nestjs baseline wire fx do)
+frameworks=(modkit nestjs baseline wire fx "do")
 raw_dir="${RESULTS_RAW_DIR:-results/latest/raw}"
 mkdir -p "$raw_dir"
 

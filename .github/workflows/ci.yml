@@ -28,7 +28,7 @@ jobs:
         run: go test ./...
 
   scripts:
-    name: Script smoke tests
+    name: Script smoke tests (skipped targets expected)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

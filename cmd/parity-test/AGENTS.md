@@ -8,6 +8,7 @@
 Go parity runner CLI that validates HTTP contract behavior against fixture scenarios.
 
 ## WHERE TO LOOK
+
 | Task | Location | Notes |
 |------|----------|-------|
 | CLI flags / execution flow | `cmd/parity-test/main.go` (`func main`) | Target URL, fixture dir, seed endpoint, timeout wiring |
@@ -16,6 +17,7 @@ Go parity runner CLI that validates HTTP contract behavior against fixture scena
 | Body matcher semantics | `cmd/parity-test/main.go` (`compareValue`, `matchStringValue`) | Recursive object/array checks + token matching |
 | Matcher primitives | `cmd/parity-test/main.go` (`isNumber`, `isISO8601`) | Type/format checks used by tokens |
 | Unit coverage for matcher + fixtures | `cmd/parity-test/main_test.go` | Token behavior, recursive compare, fixture shape guards |
+
 
 ## CONVENTIONS
 - Exit behavior is strict: missing target/fixtures or any failed scenario returns non-zero.

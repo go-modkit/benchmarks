@@ -16,8 +16,11 @@ def load_raw_files():
         return []
     rows = []
     for path in sorted(RAW_DIR.glob("*.json")):
-        with path.open("r", encoding="utf-8") as f:
-            rows.append(json.load(f))
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                rows.append(json.load(f))
+        except json.JSONDecodeError as exc:
+            print(f"Warning: skipping malformed JSON {path}: {exc}")
     return rows
 
 
