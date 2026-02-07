@@ -1,8 +1,11 @@
 SHELL := /bin/sh
 PYTHON ?= python3
 GO ?= go
+GOPATH ?= $(shell $(GO) env GOPATH)
+GO_PATCH_COVER ?= $(GOPATH)/bin/go-patch-cover
+MODULES = $(shell find . -type f -name "go.mod" -not -path "*/.*/*" -not -path "*/vendor/*" -exec dirname {} \;)
 
-.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-raw-schema-check benchmark-summary-schema-check benchmark-schema-validate benchmark-stats-check benchmark-variance-check benchmark-benchstat-check ci-benchmark-quality-check
+.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test test-coverage test-patch-coverage tools parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-raw-schema-check benchmark-summary-schema-check benchmark-schema-validate benchmark-stats-check benchmark-variance-check benchmark-benchstat-check ci-benchmark-quality-check
 
 benchmark:
 	bash scripts/run-all.sh
@@ -30,6 +33,32 @@ report:
 
 test:
 	$(GO) test ./...
+
+test-coverage:
+	@mkdir -p .coverage
+	@echo "mode: atomic" > .coverage/coverage.out
+	@for mod in $(MODULES); do \
+		echo "Testing coverage for module: $$mod"; \
+		(cd $$mod && $(GO) test -coverprofile=profile.out -covermode=atomic ./...) || exit 1; \
+		if [ -f $$mod/profile.out ]; then \
+			tail -n +2 $$mod/profile.out >> .coverage/coverage.out; \
+			rm $$mod/profile.out; \
+		fi; \
+	done
+	@printf "\nTotal Coverage:\n"
+	@$(GO) tool cover -func=.coverage/coverage.out | grep "total:"
+
+test-patch-coverage: tools test-coverage
+	@echo "Comparing against origin/main..."
+	@git diff -U0 --no-color origin/main...HEAD > .coverage/diff.patch
+	@$(GO_PATCH_COVER) .coverage/coverage.out .coverage/diff.patch > .coverage/patch_coverage.out
+	@echo "Patch Coverage Report:"
+	@cat .coverage/patch_coverage.out
+
+tools:
+	@echo "Installing development tools..."
+	@$(GO) install github.com/seriousben/go-patch-cover/cmd/go-patch-cover@latest
+	@echo "Done: go-patch-cover installed"
 
 parity-check:
 	TARGET="$(PARITY_TARGET)" bash scripts/parity-check.sh

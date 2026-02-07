@@ -21,8 +21,11 @@ Run benchmark orchestration and generate a report:
 ```bash
 make benchmark
 make report
+make benchmark-schema-validate
 make ci-benchmark-quality-check
 ```
+
+Benchmark/report flow enforces schema validation for raw and summary artifacts before quality gates.
 
 Use OSS measurement engine (optional):
 
@@ -36,6 +39,7 @@ BENCH_ENGINE=hyperfine make benchmark
 - Python 3
 - hyperfine (optional benchmark engine)
 - benchstat (`go install golang.org/x/perf/cmd/benchstat@latest`)
+- go-patch-cover (`go install github.com/seriousben/go-patch-cover/cmd/go-patch-cover@latest`, for `make test-patch-coverage`)
 
 ## Repository layout
 

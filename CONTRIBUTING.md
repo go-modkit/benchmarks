@@ -23,13 +23,26 @@ Run these before opening a PR:
 
 ```bash
 go test ./...
+make test-coverage
 TARGET=http://localhost:3001 bash scripts/parity-check.sh
+```
+
+For patch coverage against `origin/main`:
+
+```bash
+make test-patch-coverage
 ```
 
 If you changed scripts, also run shell linting if available:
 
 ```bash
 shellcheck scripts/*.sh
+```
+
+If you changed benchmark artifacts or report generation, also run schema validation:
+
+```bash
+make benchmark-schema-validate
 ```
 
 ## Pull request process
