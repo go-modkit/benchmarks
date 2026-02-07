@@ -1,4 +1,4 @@
-.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-stats-check
+.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-stats-check benchmark-variance-check
 
 benchmark:
 	bash scripts/run-all.sh
@@ -47,3 +47,6 @@ benchmark-manifest-check:
 
 benchmark-stats-check:
 	python3 scripts/benchmark-quality-check.py stats-check
+
+benchmark-variance-check:
+	python3 scripts/benchmark-quality-check.py variance-check

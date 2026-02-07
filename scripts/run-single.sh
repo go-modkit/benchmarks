@@ -188,6 +188,28 @@ def parse_cpu_percent(value):
     except ValueError:
         return None
 
+
+def coefficient_of_variation(values):
+    if len(values) < 2:
+        return 0.0
+    mean = statistics.fmean(values)
+    if mean == 0:
+        return 0.0
+    return statistics.stdev(values) / mean
+
+
+def detect_iqr_outlier_indexes(values):
+    if len(values) < 4:
+        return set(), None, None
+    q1, _, q3 = statistics.quantiles(values, n=4, method="inclusive")
+    iqr = q3 - q1
+    if iqr <= 0:
+        return set(), q1, q3
+    lower = q1 - (1.5 * iqr)
+    upper = q3 + (1.5 * iqr)
+    indexes = {idx for idx, value in enumerate(values) if value < lower or value > upper}
+    return indexes, lower, upper
+
 def request_once():
     start = time.perf_counter()
     try:
@@ -252,6 +274,41 @@ median_p50 = statistics.median([r["latency_ms_p50"] for r in run_stats])
 median_p95 = statistics.median([r["latency_ms_p95"] for r in run_stats])
 median_p99 = statistics.median([r["latency_ms_p99"] for r in run_stats])
 
+rps_values = [r["rps"] for r in run_stats]
+p95_values = [r["latency_ms_p95"] for r in run_stats]
+rps_outliers, rps_lower, rps_upper = detect_iqr_outlier_indexes(rps_values)
+p95_outliers, p95_lower, p95_upper = detect_iqr_outlier_indexes(p95_values)
+excluded_indexes = sorted(rps_outliers | p95_outliers)
+
+excluded_samples = []
+for idx in excluded_indexes:
+    reasons = []
+    if idx in rps_outliers:
+        reasons.append("rps_outlier")
+    if idx in p95_outliers:
+        reasons.append("latency_p95_outlier")
+    excluded_samples.append(
+        {
+            "run_index": idx,
+            "reasons": reasons,
+            "run": run_stats[idx],
+        }
+    )
+
+filtered_run_stats = [r for idx, r in enumerate(run_stats) if idx not in excluded_indexes]
+if not filtered_run_stats:
+    filtered_run_stats = run_stats
+
+filtered_rps = [r["rps"] for r in filtered_run_stats]
+filtered_p50 = [r["latency_ms_p50"] for r in filtered_run_stats]
+filtered_p95 = [r["latency_ms_p95"] for r in filtered_run_stats]
+filtered_p99 = [r["latency_ms_p99"] for r in filtered_run_stats]
+
+median_rps = statistics.median(filtered_rps)
+median_p50 = statistics.median(filtered_p50)
+median_p95 = statistics.median(filtered_p95)
+median_p99 = statistics.median(filtered_p99)
+
 docker_stats = {}
 try:
     completed = subprocess.run(
@@ -292,6 +349,27 @@ payload = {
         "requests_per_run": requests,
         "runs": runs,
         "run_stats": run_stats,
+        "quality": {
+            "policy": {
+                "outlier_method": "iqr_1.5",
+                "outlier_thresholds": {
+                    "rps": {"lower": rps_lower, "upper": rps_upper},
+                    "latency_ms_p95": {"lower": p95_lower, "upper": p95_upper},
+                },
+                "variance_thresholds_cv": {
+                    "rps": 0.10,
+                    "latency_ms_p95": 0.20,
+                    "latency_ms_p99": 0.25,
+                },
+            },
+            "excluded_samples": excluded_samples,
+            "effective_runs": len(filtered_run_stats),
+            "variance": {
+                "rps_cv": coefficient_of_variation(filtered_rps),
+                "latency_ms_p95_cv": coefficient_of_variation(filtered_p95),
+                "latency_ms_p99_cv": coefficient_of_variation(filtered_p99),
+            },
+        },
         "median": {
             "rps": median_rps,
             "latency_ms_p50": median_p50,
