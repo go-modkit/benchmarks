@@ -1,0 +1,49 @@
+[
+  {
+    "name": "Update existing user",
+    "request": {
+      "method": "PUT",
+      "path": "/users/2",
+      "headers": {"Content-Type": "application/json"},
+      "body": {"name": "Bob Updated", "email": "bob.updated@example.com"}
+    },
+    "response": {
+      "status": 200,
+      "body": {"id": 2, "name": "Bob Updated", "email": "bob.updated@example.com", "createdAt": "2025-01-02T00:00:00.000Z"}
+    }
+  },
+  {
+    "name": "Update missing fields",
+    "request": {
+      "method": "PUT",
+      "path": "/users/2",
+      "headers": {"Content-Type": "application/json"},
+      "body": {"name": "Only Name"}
+    },
+    "response": {
+      "status": 400,
+      "body": {
+        "type": "https://modkit.io/probs/validation-error",
+        "title": "Validation Error",
+        "detail": "email is required"
+      }
+    }
+  },
+  {
+    "name": "Update missing user",
+    "request": {
+      "method": "PUT",
+      "path": "/users/999",
+      "headers": {"Content-Type": "application/json"},
+      "body": {"name": "Ghost", "email": "ghost@example.com"}
+    },
+    "response": {
+      "status": 404,
+      "body": {
+        "type": "https://modkit.io/probs/resource-not-found",
+        "title": "User not found",
+        "detail": "user 999 does not exist"
+      }
+    }
+  }
+]

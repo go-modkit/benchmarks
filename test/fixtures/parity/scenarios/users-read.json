@@ -1,0 +1,43 @@
+[
+  {
+    "name": "List users",
+    "request": {
+      "method": "GET",
+      "path": "/users"
+    },
+    "response": {
+      "status": 200,
+      "body": [
+        {"id": 1, "name": "Alice Example", "email": "alice@example.com", "createdAt": "2025-01-01T00:00:00.000Z"},
+        {"id": 2, "name": "Bob Example", "email": "bob@example.com", "createdAt": "2025-01-02T00:00:00.000Z"},
+        {"id": 3, "name": "Carol Example", "email": "carol@example.com", "createdAt": "2025-01-03T00:00:00.000Z"}
+      ]
+    }
+  },
+  {
+    "name": "Read existing user",
+    "request": {
+      "method": "GET",
+      "path": "/users/1"
+    },
+    "response": {
+      "status": 200,
+      "body": {"id": 1, "name": "Alice Example", "email": "alice@example.com", "createdAt": "2025-01-01T00:00:00.000Z"}
+    }
+  },
+  {
+    "name": "Read missing user",
+    "request": {
+      "method": "GET",
+      "path": "/users/999"
+    },
+    "response": {
+      "status": 404,
+      "body": {
+        "type": "https://modkit.io/probs/resource-not-found",
+        "title": "User not found",
+        "detail": "user 999 does not exist"
+      }
+    }
+  }
+]

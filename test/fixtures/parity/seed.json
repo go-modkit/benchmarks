@@ -1,0 +1,22 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Alice Example",
+      "email": "alice@example.com",
+      "createdAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Bob Example",
+      "email": "bob@example.com",
+      "createdAt": "2025-01-02T00:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "Carol Example",
+      "email": "carol@example.com",
+      "createdAt": "2025-01-03T00:00:00.000Z"
+    }
+  ]
+}

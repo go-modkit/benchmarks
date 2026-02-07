@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Create valid user",
+    "request": {
+      "method": "POST",
+      "path": "/users",
+      "headers": {"Content-Type": "application/json"},
+      "body": {"name": "Dave Example", "email": "dave@example.com"}
+    },
+    "response": {
+      "status": 201,
+      "headers": {"Location": "/users/@any_number"},
+      "body": {
+        "id": "@any_number",
+        "name": "Dave Example",
+        "email": "dave@example.com",
+        "createdAt": "@is_iso8601"
+      }
+    }
+  },
+  {
+    "name": "Create user missing email",
+    "request": {
+      "method": "POST",
+      "path": "/users",
+      "headers": {"Content-Type": "application/json"},
+      "body": {"name": "Eve Missing"}
+    },
+    "response": {
+      "status": 400,
+      "body": {
+        "type": "https://modkit.io/probs/validation-error",
+        "title": "Validation Error",
+        "detail": "email is required"
+      }
+    }
+  }
+]

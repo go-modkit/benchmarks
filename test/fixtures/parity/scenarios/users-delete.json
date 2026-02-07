@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Delete existing user",
+    "request": {
+      "method": "DELETE",
+      "path": "/users/3"
+    },
+    "response": {
+      "status": 204,
+      "body": {}
+    }
+  },
+  {
+    "name": "Delete missing user",
+    "request": {
+      "method": "DELETE",
+      "path": "/users/999"
+    },
+    "response": {
+      "status": 404,
+      "body": {
+        "type": "https://modkit.io/probs/resource-not-found",
+        "title": "User not found",
+        "detail": "user 999 does not exist"
+      }
+    }
+  }
+]
