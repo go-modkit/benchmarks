@@ -1,0 +1,59 @@
+{
+  "schema_version": "summary-v1",
+  "generated_at": "2026-01-01T00:00:00+00:00",
+  "total_targets": 3,
+  "successful_targets": 1,
+  "skipped_targets": 2,
+  "targets": [
+    {
+      "framework": "modkit",
+      "status": "ok",
+      "target": "http://localhost:3001",
+      "reason": null,
+      "provenance": {
+        "raw_source": "results/latest/raw/modkit-ok.json"
+      },
+      "uncertainty": {
+        "rps_cv": 0.04,
+        "latency_ms_p95_cv": 0.06,
+        "latency_ms_p99_cv": 0.05
+      },
+      "median": {
+        "rps": 600.0,
+        "latency_ms_p50": 1.5,
+        "latency_ms_p95": 2.5,
+        "latency_ms_p99": 2.8
+      },
+      "resources_normalized": {
+        "memory_mb": 50.0,
+        "cpu_percent": 12.34,
+        "startup_ms": 15.2
+      },
+      "metric_units": {
+        "throughput": "requests_per_second",
+        "latency": "milliseconds",
+        "memory": "mb",
+        "cpu": "percent",
+        "startup": "milliseconds"
+      }
+    },
+    {
+      "framework": "nestjs",
+      "status": "skipped",
+      "target": "http://localhost:3002",
+      "reason": "target health endpoint unavailable",
+      "provenance": {
+        "raw_source": "results/latest/raw/nestjs-skipped-health.json"
+      }
+    },
+    {
+      "framework": "wire",
+      "status": "skipped",
+      "target": "http://localhost:3004",
+      "reason": "parity check failed",
+      "provenance": {
+        "raw_source": "results/latest/raw/wire-skipped-parity.json"
+      }
+    }
+  ]
+}

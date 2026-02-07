@@ -1,0 +1,11 @@
+{
+  "schema_version": "raw-v1",
+  "framework": "modkit",
+  "target": "http://localhost:3001",
+  "status": "ok",
+  "parity": "passed",
+  "engine": "legacy",
+  "metric_units": {
+    "throughput": "requests_per_second"
+  },
+  "benchmark": { "median": { "rps": 600.0 } }

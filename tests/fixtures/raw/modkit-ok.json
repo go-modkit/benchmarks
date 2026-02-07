@@ -1,0 +1,87 @@
+{
+  "schema_version": "raw-v1",
+  "framework": "modkit",
+  "target": "http://localhost:3001",
+  "status": "ok",
+  "parity": "passed",
+  "engine": "legacy",
+  "metric_units": {
+    "throughput": "requests_per_second",
+    "latency": "milliseconds",
+    "memory": "mb",
+    "cpu": "percent",
+    "startup": "milliseconds"
+  },
+  "benchmark": {
+    "endpoint": "/health",
+    "warmup_requests": 100,
+    "requests_per_run": 300,
+    "runs": 3,
+    "run_stats": [
+      {
+        "requests": 300,
+        "duration_seconds": 0.5,
+        "rps": 600.0,
+        "latency_ms_p50": 1.5,
+        "latency_ms_p95": 2.5,
+        "latency_ms_p99": 3.0,
+        "latency_ms_max": 5.0
+      },
+      {
+        "requests": 300,
+        "duration_seconds": 0.48,
+        "rps": 625.0,
+        "latency_ms_p50": 1.4,
+        "latency_ms_p95": 2.3,
+        "latency_ms_p99": 2.8,
+        "latency_ms_max": 4.5
+      },
+      {
+        "requests": 300,
+        "duration_seconds": 0.52,
+        "rps": 576.9,
+        "latency_ms_p50": 1.6,
+        "latency_ms_p95": 2.6,
+        "latency_ms_p99": 3.1,
+        "latency_ms_max": 5.2
+      }
+    ],
+    "quality": {
+      "policy": {
+        "outlier_method": "iqr_1.5",
+        "outlier_thresholds": {
+          "rps": {"lower": 400.0, "upper": 800.0},
+          "latency_ms_p95": {"lower": 1.0, "upper": 4.0}
+        },
+        "variance_thresholds_cv": {
+          "rps": 0.10,
+          "latency_ms_p95": 0.20,
+          "latency_ms_p99": 0.25
+        }
+      },
+      "excluded_samples": [],
+      "effective_runs": 3,
+      "variance": {
+        "rps_cv": 0.04,
+        "latency_ms_p95_cv": 0.06,
+        "latency_ms_p99_cv": 0.05
+      }
+    },
+    "median": {
+      "rps": 600.0,
+      "latency_ms_p50": 1.5,
+      "latency_ms_p95": 2.5,
+      "latency_ms_p99": 2.8
+    }
+  },
+  "docker": {
+    "container": "modkit-app",
+    "memory": "50MiB / 100MiB",
+    "cpu": "12.34%"
+  },
+  "resources_normalized": {
+    "memory_mb": 50.0,
+    "cpu_percent": 12.34,
+    "startup_ms": 15.2
+  }
+}

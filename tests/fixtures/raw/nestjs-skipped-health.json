@@ -1,0 +1,7 @@
+{
+  "schema_version": "raw-v1",
+  "framework": "nestjs",
+  "target": "http://localhost:3002",
+  "status": "skipped",
+  "reason": "target health endpoint unavailable"
+}

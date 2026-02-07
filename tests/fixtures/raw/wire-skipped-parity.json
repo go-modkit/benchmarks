@@ -1,0 +1,7 @@
+{
+  "schema_version": "raw-v1",
+  "framework": "wire",
+  "target": "http://localhost:3004",
+  "status": "skipped",
+  "reason": "parity check failed"
+}
