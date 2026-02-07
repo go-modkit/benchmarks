@@ -13,3 +13,6 @@ coverage.out
 
 # Local worktrees
 .worktrees/
+
+# Local OMO planning/state artifacts
+.sisyphus/
