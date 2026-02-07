@@ -77,3 +77,9 @@ Quality thresholds and required metrics are versioned in `stats-policy.yaml`.
 - run from a clean working tree when possible
 - keep runtime versions stable
 - include host and Docker metadata in report notes
+
+## CI budget policy
+
+- benchmark smoke job timeout budget: 25 minutes
+- benchmark quality summary artifact retention: 14 days
+- expected CI compute envelope: one benchmark smoke run per ref due to concurrency cancellation; superseded runs are canceled before full benchmark execution

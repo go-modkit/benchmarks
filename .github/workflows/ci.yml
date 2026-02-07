@@ -39,6 +39,7 @@ jobs:
   scripts:
     name: Script smoke tests (skipped targets expected)
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     concurrency:
       group: benchmark-smoke-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
@@ -66,3 +67,4 @@ jobs:
         with:
           name: benchmark-quality-summary
           path: results/latest/benchmark-quality-summary.json
+          retention-days: 14

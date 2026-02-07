@@ -35,13 +35,30 @@ def check_concurrency() -> None:
     print("workflow-concurrency-check: validated workflow and benchmark job concurrency controls")
 
 
+def check_budget() -> None:
+    text = read_text(CI_WORKFLOW)
+    assert_contains(
+        text,
+        "  scripts:\n    name: Script smoke tests (skipped targets expected)\n    runs-on: ubuntu-latest\n    timeout-minutes: 25",
+        "workflow-budget-check failed: scripts job timeout-minutes budget must be set to 25",
+    )
+    assert_contains(
+        text,
+        "          retention-days: 14",
+        "workflow-budget-check failed: benchmark-quality-summary artifact retention-days must be set",
+    )
+    print("workflow-budget-check: validated timeout budget and artifact retention policy")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate benchmark workflow safety policies")
-    parser.add_argument("cmd", choices=["concurrency-check"])
+    parser.add_argument("cmd", choices=["concurrency-check", "budget-check"])
     args = parser.parse_args()
 
     if args.cmd == "concurrency-check":
         check_concurrency()
+    elif args.cmd == "budget-check":
+        check_budget()
 
 
 if __name__ == "__main__":
