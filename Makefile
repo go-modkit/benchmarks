@@ -1,4 +1,4 @@
-.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check
+.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check
 
 benchmark:
 	bash scripts/run-all.sh
@@ -41,3 +41,6 @@ benchmark-fingerprint-check:
 
 benchmark-limits-check:
 	python3 scripts/environment-manifest.py check-limits --compose docker-compose.yml
+
+benchmark-manifest-check:
+	python3 scripts/environment-manifest.py check-manifest --file results/latest/environment.manifest.json

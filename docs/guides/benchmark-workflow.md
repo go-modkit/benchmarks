@@ -40,6 +40,7 @@ Benchmark scripts must run parity first for each target. If parity fails, skip b
 
 - `results/latest/raw/*.json` - raw benchmark outputs
 - `results/latest/environment.fingerprint.json` - runtime and toolchain versions for the run
+- `results/latest/environment.manifest.json` - timestamped runner metadata and result index
 - `results/latest/summary.json` - normalized summary
 - `results/latest/report.md` - markdown report
 

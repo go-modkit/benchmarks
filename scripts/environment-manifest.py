@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
+import platform
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -152,6 +154,74 @@ def check_limits(compose_path):
     print("Docker limits check passed")
 
 
+def read_json(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_manifest(raw_dir, fingerprint_path, out_path):
+    if not raw_dir.exists():
+        raise SystemExit(f"Raw results directory not found: {raw_dir}")
+    if not fingerprint_path.exists():
+        raise SystemExit(f"Fingerprint file not found: {fingerprint_path}")
+
+    rows = []
+    for path in sorted(raw_dir.glob("*.json")):
+        payload = read_json(path)
+        rows.append(
+            {
+                "file": path.name,
+                "framework": payload.get("framework"),
+                "status": payload.get("status"),
+                "reason": payload.get("reason"),
+            }
+        )
+
+    manifest = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "runner": {
+            "user": os.environ.get("USER", "unknown"),
+            "hostname": platform.node() or "unknown",
+            "platform": platform.platform(),
+            "machine": platform.machine() or "unknown",
+        },
+        "artifacts": {
+            "raw_dir": str(raw_dir),
+            "fingerprint_file": str(fingerprint_path),
+            "targets": len(rows),
+        },
+        "fingerprint": read_json(fingerprint_path),
+        "targets": rows,
+    }
+    write_json(out_path, manifest)
+    print(f"Wrote: {out_path}")
+
+
+def check_manifest(path):
+    if not path.exists():
+        raise SystemExit(f"Manifest file not found: {path}")
+    payload = read_json(path)
+
+    require_non_empty_string(payload, "generated_at")
+
+    runner = payload.get("runner")
+    if not isinstance(runner, dict):
+        raise SystemExit("Missing runner object")
+    require_non_empty_string(runner, "user")
+    require_non_empty_string(runner, "hostname")
+
+    artifacts = payload.get("artifacts")
+    if not isinstance(artifacts, dict):
+        raise SystemExit("Missing artifacts object")
+    require_non_empty_string(artifacts, "raw_dir")
+    require_non_empty_string(artifacts, "fingerprint_file")
+
+    targets = payload.get("targets")
+    if not isinstance(targets, list):
+        raise SystemExit("Missing targets list")
+
+    print("Manifest check passed")
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Benchmark environment metadata helpers")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -164,6 +234,14 @@ def parse_args():
 
     limits = sub.add_parser("check-limits", help="Validate docker-compose cpu/memory limits")
     limits.add_argument("--compose", required=True, type=Path)
+
+    manifest = sub.add_parser("write-manifest", help="Write environment manifest")
+    manifest.add_argument("--raw-dir", required=True, type=Path)
+    manifest.add_argument("--fingerprint", required=True, type=Path)
+    manifest.add_argument("--out", required=True, type=Path)
+
+    check_manifest_cmd = sub.add_parser("check-manifest", help="Validate environment manifest")
+    check_manifest_cmd.add_argument("--file", required=True, type=Path)
 
     return parser.parse_args()
 
@@ -178,6 +256,12 @@ def main():
         return
     if args.cmd == "check-limits":
         check_limits(args.compose)
+        return
+    if args.cmd == "write-manifest":
+        write_manifest(args.raw_dir, args.fingerprint, args.out)
+        return
+    if args.cmd == "check-manifest":
+        check_manifest(args.file)
         return
     raise SystemExit(f"Unknown command: {args.cmd}")
 
