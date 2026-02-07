@@ -104,6 +104,7 @@ benchmarks/
 - `docs/guides/parity-contract.md` - fixture and matcher semantics
 - `docs/guides/adding-scenarios.md` - how to add parity scenarios
 - `docs/guides/benchmark-workflow.md` - benchmark and reporting flow
+- `docs/guides/repository-metadata.md` - repository metadata and positioning
 
 ## Contributing
 
