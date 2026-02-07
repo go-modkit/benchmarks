@@ -55,7 +55,7 @@ def check_budget() -> None:
     )
     assert_contains(
         text,
-        "          retention-days: 14",
+        "      - name: Upload benchmark quality summary\n        uses: actions/upload-artifact@v4\n        with:\n          name: benchmark-quality-summary\n          path: results/latest/benchmark-quality-summary.json\n          retention-days: 14",
         "workflow-budget-check failed: benchmark-quality-summary artifact retention-days must be set",
     )
     print("workflow-budget-check: validated timeout budget and artifact retention policy")
@@ -82,6 +82,7 @@ def check_inputs() -> None:
         "BENCH_REQUESTS",
         "runs must be between 1 and 10",
         "benchmark_requests must be between 50 and 1000",
+        "duplicate framework not allowed",
     ):
         assert_contains(
             text,

@@ -62,9 +62,17 @@ jobs:
           fi
 
           normalized=()
+          seen_frameworks=","
           for framework in "${raw_frameworks[@]}"; do
             case " $allowed " in
-              *" $framework "*) normalized+=("$framework") ;;
+              *" $framework "*)
+                if [[ "$seen_frameworks" == *",$framework,"* ]]; then
+                  echo "duplicate framework not allowed: $framework" >&2
+                  exit 1
+                fi
+                normalized+=("$framework")
+                seen_frameworks+="$framework,"
+                ;;
               *)
                 echo "unsupported framework: $framework" >&2
                 exit 1
