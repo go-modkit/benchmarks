@@ -36,13 +36,15 @@ results/latest/          benchmark outputs and generated report
 
 1. Launch target services
 2. Run parity checks per target
-3. Run load benchmarks for parity-passing targets
-4. Save raw outputs
-5. Build `summary.json`
-6. Generate `report.md`
+3. Run load benchmarks for parity-passing targets (`legacy` engine or `hyperfine`)
+4. Normalize and save raw outputs
+5. Run policy quality gates (`stats-policy.yaml` + benchstat)
+6. Build `summary.json`
+7. Generate `report.md`
 
 ## Failure model
 
 - parity failures do not stop fixture file iteration; they aggregate and fail at the end
 - benchmark runs should short-circuit per target if parity fails
 - report generation should tolerate partial target results and mark skipped targets
+- quality gate summary should always be emitted, including all-skipped smoke runs

@@ -1,0 +1,29 @@
+{
+  "quality": {
+    "required_metrics": [
+      "benchmark.median.rps",
+      "benchmark.median.latency_ms_p50",
+      "benchmark.median.latency_ms_p95",
+      "benchmark.median.latency_ms_p99"
+    ],
+    "metric_units": {
+      "throughput": "requests_per_second",
+      "latency": "milliseconds",
+      "memory": "mb",
+      "cpu": "percent",
+      "startup": "milliseconds"
+    },
+    "variance_thresholds_cv": {
+      "rps": 0.10,
+      "latency_ms_p95": 0.20,
+      "latency_ms_p99": 0.25
+    },
+    "benchstat": {
+      "enabled": true,
+      "baseline_framework": "baseline",
+      "max_regression_percent": {
+        "ns_per_op": 15.0
+      }
+    }
+  }
+}

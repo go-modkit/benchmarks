@@ -40,7 +40,20 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - name: Install benchmark quality tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y hyperfine
+          go install golang.org/x/perf/cmd/benchstat@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Run benchmark script smoke
         run: bash scripts/run-all.sh
       - name: Generate report from raw results
         run: python3 scripts/generate-report.py
+      - name: Run statistical quality gate
+        run: make ci-benchmark-quality-check
+      - name: Upload benchmark quality summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-quality-summary
+          path: results/latest/benchmark-quality-summary.json
