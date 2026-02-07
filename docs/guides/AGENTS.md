@@ -15,7 +15,6 @@ Operator-facing guides for parity contract usage, scenario authoring, and benchm
 | Add or modify scenarios safely | `docs/guides/adding-scenarios.md` | Endpoint-grouped workflow + checklist |
 | Run benchmark pipeline | `docs/guides/benchmark-workflow.md` | Standard, per-target, and artifact expectations |
 | Publish benchmark results | `docs/guides/benchmark-publication-policy.md` | Minimum disclosure for publishable results |
-| Manage repo metadata | `docs/guides/repository-metadata.md` | Description, topics, and gh commands |
 | View maintainership info | `MAINTAINERS.md` | Roles, triage SLA, and escalation |
 
 
