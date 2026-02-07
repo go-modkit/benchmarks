@@ -50,6 +50,8 @@ jobs:
         run: bash scripts/run-all.sh
       - name: Generate report from raw results
         run: python3 scripts/generate-report.py
+      - name: Validate benchmark result schemas
+        run: make benchmark-schema-validate
       - name: Run statistical quality gate
         run: make ci-benchmark-quality-check
       - name: Upload benchmark quality summary

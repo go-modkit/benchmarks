@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import json
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -9,6 +11,13 @@ RESULTS_LATEST = ROOT / "results" / "latest"
 RAW_DIR = RESULTS_LATEST / "raw"
 SUMMARY_PATH = RESULTS_LATEST / "summary.json"
 REPORT_PATH = RESULTS_LATEST / "report.md"
+
+
+def run_schema_check(command):
+    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    if completed.returncode != 0:
+        message = completed.stderr.strip() or completed.stdout.strip() or "schema validation failed"
+        raise SystemExit(message)
 
 
 def load_raw_files():
@@ -117,9 +126,11 @@ def write_report(summary):
 
 
 def main():
+    run_schema_check([sys.executable, "scripts/validate-result-schemas.py", "raw-check"])
     rows = load_raw_files()
     summary = build_summary(rows)
     write_summary(summary)
+    run_schema_check([sys.executable, "scripts/validate-result-schemas.py", "summary-check"])
     write_report(summary)
     print(f"Wrote: {SUMMARY_PATH}")
     print(f"Wrote: {REPORT_PATH}")
