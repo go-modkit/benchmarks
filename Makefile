@@ -1,4 +1,4 @@
-.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report parity-check parity-check-modkit parity-check-nestjs
+.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test parity-check parity-check-modkit parity-check-nestjs
 
 benchmark:
 	bash scripts/run-all.sh
@@ -23,6 +23,9 @@ benchmark-do:
 
 report:
 	python3 scripts/generate-report.py
+
+test:
+	go test ./...
 
 parity-check:
 	TARGET="$(PARITY_TARGET)" bash scripts/parity-check.sh
