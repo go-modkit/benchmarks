@@ -47,7 +47,12 @@ def build_summary(rows):
                 "rps": median.get("rps"),
                 "latency_ms_p50": median.get("latency_ms_p50"),
                 "latency_ms_p95": median.get("latency_ms_p95"),
+                "latency_ms_p99": median.get("latency_ms_p99"),
             }
+        if row.get("resources_normalized"):
+            target["resources_normalized"] = row.get("resources_normalized")
+        if row.get("metric_units"):
+            target["metric_units"] = row.get("metric_units")
         summary["targets"].append(target)
     return summary
 
@@ -71,8 +76,8 @@ def write_report(summary):
         "",
         "## Results",
         "",
-        "| Framework | Status | Median RPS | P50 Latency (ms) | P95 Latency (ms) | Notes |",
-        "|---|---:|---:|---:|---:|---|",
+        "| Framework | Status | Median RPS | P50 Latency (ms) | P95 Latency (ms) | P99 Latency (ms) | Notes |",
+        "|---|---:|---:|---:|---:|---:|---|",
     ]
 
     for t in summary["targets"]:
@@ -80,8 +85,9 @@ def write_report(summary):
         rps = f"{median.get('rps', 0):.2f}" if "rps" in median else "-"
         p50 = f"{median.get('latency_ms_p50', 0):.2f}" if "latency_ms_p50" in median else "-"
         p95 = f"{median.get('latency_ms_p95', 0):.2f}" if "latency_ms_p95" in median else "-"
+        p99 = f"{median.get('latency_ms_p99', 0):.2f}" if "latency_ms_p99" in median else "-"
         notes = t.get("reason") or ""
-        lines.append(f"| {t.get('framework','-')} | {t.get('status','-')} | {rps} | {p50} | {p95} | {notes} |")
+        lines.append(f"| {t.get('framework','-')} | {t.get('status','-')} | {rps} | {p50} | {p95} | {p99} | {notes} |")
 
     lines.extend(
         [

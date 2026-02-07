@@ -136,6 +136,7 @@ endpoint="${BENCHMARK_ENDPOINT:-/health}"
 
 python3 - <<'PY' "$framework" "$target" "$endpoint" "$warmup_requests" "$benchmark_requests" "$runs" "$out_file" "$parity_result"
 import json
+import re
 import statistics
 import subprocess
 import sys
@@ -148,6 +149,44 @@ warmup = int(warmup)
 requests = int(requests)
 runs = int(runs)
 url = target.rstrip("/") + endpoint
+
+
+UNIT_TO_MB = {
+    "b": 1 / (1024 * 1024),
+    "kb": 1 / 1000,
+    "kib": 1 / 1024,
+    "mb": 1,
+    "mib": 1,
+    "gb": 1000,
+    "gib": 1024,
+    "tb": 1000 * 1000,
+    "tib": 1024 * 1024,
+}
+
+
+def parse_mem_to_mb(value):
+    if not value:
+        return None
+    head = str(value).split("/", 1)[0].strip()
+    match = re.match(r"^([0-9]+(?:\.[0-9]+)?)\s*([a-zA-Z]+)$", head)
+    if not match:
+        return None
+    amount = float(match.group(1))
+    unit = match.group(2).lower()
+    factor = UNIT_TO_MB.get(unit)
+    if factor is None:
+        return None
+    return amount * factor
+
+
+def parse_cpu_percent(value):
+    if not value:
+        return None
+    raw = str(value).strip().removesuffix("%")
+    try:
+        return float(raw)
+    except ValueError:
+        return None
 
 def request_once():
     start = time.perf_counter()
@@ -163,9 +202,12 @@ def request_once():
         raise RuntimeError(f"request_error {exc}") from exc
 
 # Warmup: tolerate transient failures.
+warmup_first_success = None
 for _ in range(warmup):
     try:
-        request_once()
+        duration = request_once()
+        if warmup_first_success is None:
+            warmup_first_success = duration
     except Exception:
         pass
 
@@ -187,6 +229,7 @@ for _ in range(runs):
             "rps": requests / total if total > 0 else 0.0,
             "latency_ms_p50": statistics.median(durations) * 1000,
             "latency_ms_p95": statistics.quantiles(durations, n=20)[18] * 1000,
+            "latency_ms_p99": statistics.quantiles(durations, n=100)[98] * 1000,
             "latency_ms_max": max(durations) * 1000,
         }
     )
@@ -207,6 +250,7 @@ if not run_stats:
 median_rps = statistics.median([r["rps"] for r in run_stats])
 median_p50 = statistics.median([r["latency_ms_p50"] for r in run_stats])
 median_p95 = statistics.median([r["latency_ms_p95"] for r in run_stats])
+median_p99 = statistics.median([r["latency_ms_p99"] for r in run_stats])
 
 docker_stats = {}
 try:
@@ -235,6 +279,13 @@ payload = {
     "target": target,
     "status": "ok",
     "parity": parity_result,
+    "metric_units": {
+        "throughput": "requests_per_second",
+        "latency": "milliseconds",
+        "memory": "mb",
+        "cpu": "percent",
+        "startup": "milliseconds",
+    },
     "benchmark": {
         "endpoint": endpoint,
         "warmup_requests": warmup,
@@ -245,15 +296,21 @@ payload = {
             "rps": median_rps,
             "latency_ms_p50": median_p50,
             "latency_ms_p95": median_p95,
+            "latency_ms_p99": median_p99,
         },
     },
     "docker": docker_stats,
+    "resources_normalized": {
+        "memory_mb": parse_mem_to_mb(docker_stats.get("memory")),
+        "cpu_percent": parse_cpu_percent(docker_stats.get("cpu")),
+        "startup_ms": (warmup_first_success * 1000) if warmup_first_success is not None else None,
+    },
 }
 
 with open(out_file, "w", encoding="utf-8") as f:
     json.dump(payload, f, indent=2)
 
-print(f"OK {framework}: median_rps={median_rps:.2f} p50={median_p50:.2f}ms p95={median_p95:.2f}ms")
+print(f"OK {framework}: median_rps={median_rps:.2f} p50={median_p50:.2f}ms p95={median_p95:.2f}ms p99={median_p99:.2f}ms")
 PY
 
 write_manifest
