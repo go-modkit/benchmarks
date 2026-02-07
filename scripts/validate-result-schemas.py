@@ -72,7 +72,10 @@ def validate_jsonschema(payload, schema, path, artifact_label):
         )
 
     validator = Draft202012Validator(schema)
-    errors = sorted(validator.iter_errors(payload), key=lambda err: list(err.path))
+    errors = sorted(
+        validator.iter_errors(payload),
+        key=lambda err: [str(part) for part in err.path],
+    )
     if not errors:
         return
     first = errors[0]

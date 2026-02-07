@@ -22,7 +22,11 @@ install_with_brew() {
     return 1
   fi
   if have_cmd brew; then
-    brew list "$pkg" >/dev/null 2>&1 || brew install "$pkg"
+    if ! brew list "$pkg" >/dev/null 2>&1; then
+      if ! brew install "$pkg"; then
+        return 1
+      fi
+    fi
     return 0
   fi
   return 1
@@ -32,10 +36,14 @@ install_with_apt() {
   local pkg="$1"
   if have_cmd apt-get; then
     if [ "$apt_updated" -eq 0 ]; then
-      sudo apt-get update
+      if ! sudo apt-get update; then
+        return 1
+      fi
       apt_updated=1
     fi
-    sudo apt-get install -y "$pkg"
+    if ! sudo apt-get install -y "$pkg"; then
+      return 1
+    fi
     return 0
   fi
   return 1

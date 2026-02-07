@@ -245,10 +245,9 @@ func TestRunScenario_InvalidJSONResponse(t *testing.T) {
 func TestRunScenario_DefaultMethodIsGET(t *testing.T) {
 	t.Parallel()
 
+	methodCh := make(chan string, 1)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			t.Fatalf("expected default method GET, got %s", r.Method)
-		}
+		methodCh <- r.Method
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"ok":true}`))
@@ -263,6 +262,15 @@ func TestRunScenario_DefaultMethodIsGET(t *testing.T) {
 
 	if err := runScenario(&http.Client{Timeout: time.Second}, server.URL, s); err != nil {
 		t.Fatalf("unexpected runScenario error: %v", err)
+	}
+
+	select {
+	case got := <-methodCh:
+		if got != http.MethodGet {
+			t.Fatalf("expected default method GET, got %s", got)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for request method")
 	}
 }
 
