@@ -19,6 +19,21 @@ make benchmark-modkit
 make benchmark-nestjs
 ```
 
+Per-target runs also emit `results/latest/environment.fingerprint.json` and `results/latest/environment.manifest.json`.
+
+## Docker resource limits
+
+Framework services use shared default limits from `docker-compose.yml`:
+
+- CPU: `BENCHMARK_CPU_LIMIT` (default `1.00`)
+- memory: `BENCHMARK_MEMORY_LIMIT` (default `1024m`)
+
+Override for local experimentation:
+
+```bash
+BENCHMARK_CPU_LIMIT=2.00 BENCHMARK_MEMORY_LIMIT=1536m docker compose up --build
+```
+
 ## Parity gate
 
 Benchmark scripts must run parity first for each target. If parity fails, skip benchmark for that target and record the skip reason.
@@ -26,6 +41,8 @@ Benchmark scripts must run parity first for each target. If parity fails, skip b
 ## Artifacts
 
 - `results/latest/raw/*.json` - raw benchmark outputs
+- `results/latest/environment.fingerprint.json` - runtime and toolchain versions for the run
+- `results/latest/environment.manifest.json` - timestamped runner metadata and result index
 - `results/latest/summary.json` - normalized summary
 - `results/latest/report.md` - markdown report
 

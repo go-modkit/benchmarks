@@ -3,25 +3,37 @@ version: "3.9"
 services:
   modkit:
     build: ./apps/modkit
+    cpus: ${BENCHMARK_CPU_LIMIT:-1.00}
+    mem_limit: ${BENCHMARK_MEMORY_LIMIT:-1024m}
     ports:
       - "3001:3000"
   nestjs:
     build: ./apps/nestjs
+    cpus: ${BENCHMARK_CPU_LIMIT:-1.00}
+    mem_limit: ${BENCHMARK_MEMORY_LIMIT:-1024m}
     ports:
       - "3002:3000"
   baseline:
     build: ./apps/baseline
+    cpus: ${BENCHMARK_CPU_LIMIT:-1.00}
+    mem_limit: ${BENCHMARK_MEMORY_LIMIT:-1024m}
     ports:
       - "3003:3000"
   wire:
     build: ./apps/wire
+    cpus: ${BENCHMARK_CPU_LIMIT:-1.00}
+    mem_limit: ${BENCHMARK_MEMORY_LIMIT:-1024m}
     ports:
       - "3004:3000"
   fx:
     build: ./apps/fx
+    cpus: ${BENCHMARK_CPU_LIMIT:-1.00}
+    mem_limit: ${BENCHMARK_MEMORY_LIMIT:-1024m}
     ports:
       - "3005:3000"
   do:
     build: ./apps/do
+    cpus: ${BENCHMARK_CPU_LIMIT:-1.00}
+    mem_limit: ${BENCHMARK_MEMORY_LIMIT:-1024m}
     ports:
       - "3006:3000"
