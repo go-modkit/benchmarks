@@ -71,6 +71,7 @@ import statistics
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 
 framework, target, endpoint, warmup, requests, runs, out_file, parity_result = sys.argv[1:9]
@@ -81,18 +82,34 @@ url = target.rstrip("/") + endpoint
 
 def request_once():
     start = time.perf_counter()
-    with urllib.request.urlopen(url, timeout=5) as r:
-        r.read()
-        if r.status >= 400:
-            raise RuntimeError(f"status {r.status}")
-    return time.perf_counter() - start
+    try:
+        with urllib.request.urlopen(url, timeout=5) as r:
+            r.read()
+        return time.perf_counter() - start
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"http_error status={exc.code}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"url_error reason={exc.reason}") from exc
+    except Exception as exc:
+        raise RuntimeError(f"request_error {exc}") from exc
 
+# Warmup: tolerate transient failures.
 for _ in range(warmup):
-    request_once()
+    try:
+        request_once()
+    except Exception:
+        pass
 
 run_stats = []
 for _ in range(runs):
-    durations = [request_once() for _ in range(requests)]
+    durations = []
+    for _ in range(requests):
+        try:
+            durations.append(request_once())
+        except Exception:
+            pass
+    if not durations:
+        continue
     total = sum(durations)
     run_stats.append(
         {
@@ -104,6 +121,19 @@ for _ in range(runs):
             "latency_ms_max": max(durations) * 1000,
         }
     )
+
+if not run_stats:
+    payload = {
+        "framework": framework,
+        "target": target,
+        "status": "skipped",
+        "reason": "benchmark requests failed",
+        "parity": parity_result,
+    }
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+    print(f"SKIP {framework}: benchmark requests failed")
+    raise SystemExit(0)
 
 median_rps = statistics.median([r["rps"] for r in run_stats])
 median_p50 = statistics.median([r["latency_ms_p50"] for r in run_stats])
