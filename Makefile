@@ -3,11 +3,20 @@ PYTHON ?= python3
 GO ?= go
 PYTEST ?= pytest
 BATS ?= bats
+
+ifneq ("$(wildcard .venv/bin/python)","")
+PYTHON := .venv/bin/python
+endif
+
+ifneq ("$(wildcard .venv/bin/pytest)","")
+PYTEST := .venv/bin/pytest
+endif
+
 GOPATH ?= $(shell $(GO) env GOPATH)
 GO_PATCH_COVER ?= $(GOPATH)/bin/go-patch-cover
 MODULES = $(shell find . -type f -name "go.mod" -not -path "*/.*/*" -not -path "*/vendor/*" -exec dirname {} \;)
 
-.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test test-go test-python test-shell test-scripts test-coverage test-coverage-go test-coverage-python test-patch-coverage tools parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-raw-schema-check benchmark-summary-schema-check benchmark-schema-validate benchmark-stats-check benchmark-variance-check benchmark-benchstat-check ci-benchmark-quality-check workflow-concurrency-check workflow-budget-check workflow-inputs-check report-disclaimer-check methodology-changelog-check publication-sync-check
+.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test test-go test-python test-shell test-scripts test-coverage test-coverage-go test-coverage-python test-patch-coverage tools setup-dev-env setup-dev-env-ci setup-dev-env-ci-scripts parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-raw-schema-check benchmark-summary-schema-check benchmark-schema-validate benchmark-stats-check benchmark-variance-check benchmark-benchstat-check ci-benchmark-quality-check workflow-concurrency-check workflow-budget-check workflow-inputs-check report-disclaimer-check methodology-changelog-check publication-sync-check
 
 benchmark:
 	bash scripts/run-all.sh
@@ -93,6 +102,15 @@ tools:
 	@echo "Installing development tools..."
 	@$(GO) install github.com/seriousben/go-patch-cover/cmd/go-patch-cover@latest
 	@echo "Done: go-patch-cover installed"
+
+setup-dev-env:
+	bash scripts/setup-dev-env.sh
+
+setup-dev-env-ci:
+	bash scripts/setup-dev-env.sh --ci --subset core,python-test,go-tools
+
+setup-dev-env-ci-scripts:
+	bash scripts/setup-dev-env.sh --ci --subset core,python-test,shell-test,benchmark-tools
 
 parity-check:
 	TARGET="$(PARITY_TARGET)" bash scripts/parity-check.sh

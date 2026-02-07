@@ -27,6 +27,17 @@ Bootstrap local dependencies:
 bash scripts/setup-dev-env.sh
 ```
 
+Optional targeted setup modes:
+
+```bash
+# CI-friendly install flow
+bash scripts/setup-dev-env.sh --ci --subset core,python-test,shell-test,benchmark-tools
+
+# Makefile wrappers
+make setup-dev-env
+make setup-dev-env-ci-scripts
+```
+
 ## Local validation
 
 Run these before opening a PR:

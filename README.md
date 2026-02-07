@@ -62,6 +62,9 @@ BENCH_ENGINE=hyperfine make benchmark
 ## Tooling prerequisites
 
 - One-command local setup: `bash scripts/setup-dev-env.sh`
+- CI/subset setup examples:
+  - `bash scripts/setup-dev-env.sh --ci --subset core,python-test,shell-test,benchmark-tools`
+  - `make setup-dev-env-ci-scripts`
 
 - Go (for `go test` and `benchstat`)
 - Python 3
