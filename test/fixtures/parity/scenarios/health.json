@@ -1,0 +1,15 @@
+[
+  {
+    "name": "Health endpoint responds 200",
+    "request": {
+      "method": "GET",
+      "path": "/health"
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "status": "ok"
+      }
+    }
+  }
+]
