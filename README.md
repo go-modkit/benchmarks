@@ -14,6 +14,21 @@ Benchmark harness for framework parity and performance comparisons.
 - stores declarative parity fixtures and seed data
 - provides benchmark orchestration scripts and report generation
 
+## Status & scope
+
+- **Status**: Active benchmark harness with CI-enforced parity, schema checks, and quality policy checks.
+- **Current targets**: `modkit`, `nestjs`, `baseline`, `wire`, `fx`, `do`.
+- **Scope**: This repository publishes methodology, raw artifacts, and reproducible reports; it does not claim absolute winners across runtimes.
+- **Primary artifact entrypoints**: `results/latest/report.md` and `results/latest/summary.json`.
+
+## How to contribute benchmark targets
+
+1. Implement a runnable service target under the project structure used by existing adapters.
+2. Add or update parity fixtures in `test/fixtures/parity/` to keep behavior checks explicit.
+3. Validate locally with `PARITY_TARGET=http://localhost:<port> make parity-check`.
+4. Run benchmark flow and checks: `make benchmark`, `make report`, `make benchmark-schema-validate`, `make ci-benchmark-quality-check`.
+5. Open a PR with reproducibility context and generated artifact references (see `CONTRIBUTING.md` and `docs/guides/benchmark-workflow.md`).
+
 ## How this complements modkit
 
 This repository serves as the companion performance laboratory for [go-modkit/modkit](https://github.com/go-modkit/modkit). While modkit focuses on developer ergonomics and modular architecture, this harness ensures that those abstractions do not come at the cost of performance or correctness.
