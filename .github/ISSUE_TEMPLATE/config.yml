@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and Discussions
+    url: https://github.com/go-modkit/benchmarks/discussions
+    about: Use Discussions for usage questions and open-ended design discussion.
+  - name: Security vulnerabilities
+    url: https://github.com/go-modkit/benchmarks/security/policy
+    about: Report vulnerabilities privately.
