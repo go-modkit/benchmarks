@@ -6,6 +6,10 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pr-title:
     name: Validate PR title
@@ -35,6 +39,10 @@ jobs:
   scripts:
     name: Script smoke tests (skipped targets expected)
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: benchmark-smoke-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v5
@@ -59,3 +67,4 @@ jobs:
         with:
           name: benchmark-quality-summary
           path: results/latest/benchmark-quality-summary.json
+          retention-days: 14

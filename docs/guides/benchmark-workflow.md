@@ -25,6 +25,16 @@ make benchmark-nestjs
 
 Per-target runs also emit `results/latest/environment.fingerprint.json` and `results/latest/environment.manifest.json`.
 
+## Manual bounded CI run
+
+Use GitHub Actions workflow `benchmark-manual` with bounded `workflow_dispatch` inputs:
+
+- `frameworks`: comma-separated subset of `modkit,nestjs,baseline,wire,fx,do`
+- `runs`: integer in range `1..10`
+- `benchmark_requests`: integer in range `50..1000`
+
+Runs that exceed bounds are rejected before benchmark execution.
+
 Optional OSS measurement engine:
 
 ```bash
@@ -77,3 +87,9 @@ Quality thresholds and required metrics are versioned in `stats-policy.yaml`.
 - run from a clean working tree when possible
 - keep runtime versions stable
 - include host and Docker metadata in report notes
+
+## CI budget policy
+
+- benchmark smoke job timeout budget: 25 minutes
+- benchmark quality summary artifact retention: 14 days
+- expected CI compute envelope: one benchmark smoke run per ref due to concurrency cancellation; superseded runs are canceled before full benchmark execution

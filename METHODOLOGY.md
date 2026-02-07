@@ -36,6 +36,7 @@
 - thresholds and required metrics are defined in `stats-policy.yaml`
 - `make ci-benchmark-quality-check` enforces policy locally and in CI
 - benchstat comparisons are evaluated against policy baseline framework (`baseline` by default)
+- manual CI benchmark runs use bounded workflow inputs (`frameworks` subset, `runs` 1..10, `benchmark_requests` 50..1000)
 
 ## Reporting
 

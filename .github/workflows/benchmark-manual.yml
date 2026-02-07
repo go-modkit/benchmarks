@@ -1,0 +1,141 @@
+name: benchmark-manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      frameworks:
+        description: "Comma-separated frameworks (modkit,nestjs,baseline,wire,fx,do)"
+        required: true
+        default: "modkit,nestjs"
+        type: string
+      runs:
+        description: "Benchmark runs per framework (1-10)"
+        required: true
+        default: "3"
+        type: string
+      benchmark_requests:
+        description: "Benchmark requests per run (50-1000)"
+        required: true
+        default: "300"
+        type: string
+
+concurrency:
+  group: benchmark-manual-${{ github.ref }}-${{ github.event.inputs.frameworks }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Manual bounded benchmark run
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Install benchmark quality tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y hyperfine
+          go install golang.org/x/perf/cmd/benchstat@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Validate and normalize workflow inputs
+        id: normalize
+        shell: bash
+        env:
+          INPUT_FRAMEWORKS: ${{ github.event.inputs.frameworks }}
+          INPUT_RUNS: ${{ github.event.inputs.runs }}
+          INPUT_BENCHMARK_REQUESTS: ${{ github.event.inputs.benchmark_requests }}
+        run: |
+          set -euo pipefail
+          allowed="modkit nestjs baseline wire fx do"
+          framework_csv="$(printf '%s' "$INPUT_FRAMEWORKS" | tr -d '[:space:]')"
+          if [[ -z "$framework_csv" ]]; then
+            echo "frameworks input must not be empty" >&2
+            exit 1
+          fi
+
+          IFS=',' read -r -a raw_frameworks <<< "$framework_csv"
+          if [[ ${#raw_frameworks[@]} -eq 0 || ${#raw_frameworks[@]} -gt 6 ]]; then
+            echo "frameworks input must contain 1-6 entries" >&2
+            exit 1
+          fi
+
+          normalized=()
+          seen_frameworks=","
+          for framework in "${raw_frameworks[@]}"; do
+            case " $allowed " in
+              *" $framework "*)
+                if [[ "$seen_frameworks" == *",$framework,"* ]]; then
+                  echo "duplicate framework not allowed: $framework" >&2
+                  exit 1
+                fi
+                normalized+=("$framework")
+                seen_frameworks+="$framework,"
+                ;;
+              *)
+                echo "unsupported framework: $framework" >&2
+                exit 1
+                ;;
+            esac
+          done
+
+          if ! [[ "$INPUT_RUNS" =~ ^[0-9]+$ ]]; then
+            echo "runs must be an integer" >&2
+            exit 1
+          fi
+          if ! [[ "$INPUT_BENCHMARK_REQUESTS" =~ ^[0-9]+$ ]]; then
+            echo "benchmark_requests must be an integer" >&2
+            exit 1
+          fi
+
+          BENCH_RUNS="$INPUT_RUNS"
+          BENCH_REQUESTS="$INPUT_BENCHMARK_REQUESTS"
+
+          if (( BENCH_RUNS < 1 || BENCH_RUNS > 10 )); then
+            echo "runs must be between 1 and 10" >&2
+            exit 1
+          fi
+          if (( BENCH_REQUESTS < 50 || BENCH_REQUESTS > 1000 )); then
+            echo "benchmark_requests must be between 50 and 1000" >&2
+            exit 1
+          fi
+
+          {
+            echo "frameworks=$(IFS=,; echo "${normalized[*]}")"
+            echo "bench_runs=$BENCH_RUNS"
+            echo "bench_requests=$BENCH_REQUESTS"
+          } >> "$GITHUB_OUTPUT"
+      - name: Run bounded benchmarks
+        shell: bash
+        env:
+          BENCH_ENGINE: hyperfine
+        run: |
+          set -euo pipefail
+          python3 scripts/environment-manifest.py collect-fingerprint --out results/latest/environment.fingerprint.json
+          IFS=',' read -r -a frameworks <<< "${{ steps.normalize.outputs.frameworks }}"
+          for framework in "${frameworks[@]}"; do
+            BENCHMARK_METADATA_MANAGED=1 \
+            BENCHMARK_RUNS="${{ steps.normalize.outputs.bench_runs }}" \
+            BENCHMARK_REQUESTS="${{ steps.normalize.outputs.bench_requests }}" \
+            bash scripts/run-single.sh "$framework"
+          done
+          python3 scripts/validate-result-schemas.py raw-check --raw-dir results/latest/raw
+          python3 scripts/environment-manifest.py write-manifest --raw-dir results/latest/raw --fingerprint results/latest/environment.fingerprint.json --out results/latest/environment.manifest.json
+      - name: Generate report and policy checks
+        run: |
+          python3 scripts/generate-report.py
+          make benchmark-schema-validate
+          make ci-benchmark-quality-check
+      - name: Upload manual benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-manual-results
+          path: |
+            results/latest/raw
+            results/latest/summary.json
+            results/latest/report.md
+            results/latest/benchmark-quality-summary.json
+            results/latest/environment.fingerprint.json
+            results/latest/environment.manifest.json
+          retention-days: 14
