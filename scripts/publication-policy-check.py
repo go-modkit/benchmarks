@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORT = ROOT / "results" / "latest" / "report.md"
 REPORT_GENERATOR = ROOT / "scripts" / "generate-report.py"
+METHODOLOGY = ROOT / "METHODOLOGY.md"
 
 
 def report_content() -> str:
@@ -37,8 +39,46 @@ def disclaimer_check() -> None:
     print(f"report-disclaimer-check: validated disclaimer sections via {source}")
 
 
+def changelog_check() -> None:
+    if not METHODOLOGY.exists():
+        raise SystemExit(f"methodology-changelog-check failed: missing {METHODOLOGY}")
+
+    content = METHODOLOGY.read_text(encoding="utf-8")
+    required = [
+        "## Methodology changelog policy",
+        "### Update rules",
+        "### Entry format",
+        "### Changelog",
+        "comparability-impacting",
+        "| version | date (UTC) | change_type | summary | comparability_impact | required_action |",
+    ]
+    for token in required:
+        if token not in content:
+            raise SystemExit(f"methodology-changelog-check failed: missing '{token}' in METHODOLOGY.md")
+
+    changelog_rows = [
+        line
+        for line in content.splitlines()
+        if line.startswith("|") and "comparability-impacting" in line
+    ]
+    if not changelog_rows:
+        raise SystemExit(
+            "methodology-changelog-check failed: changelog requires at least one comparability-impacting entry"
+        )
+    print("methodology-changelog-check: validated changelog policy and comparability entries")
+
+
 def main() -> None:
-    disclaimer_check()
+    command = sys.argv[1] if len(sys.argv) > 1 else "report-disclaimer-check"
+    if command == "report-disclaimer-check":
+        disclaimer_check()
+        return
+    if command == "methodology-changelog-check":
+        changelog_check()
+        return
+    raise SystemExit(
+        "usage: publication-policy-check.py [report-disclaimer-check|methodology-changelog-check]"
+    )
 
 
 if __name__ == "__main__":

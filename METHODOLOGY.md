@@ -46,6 +46,28 @@
 - quality summary: `results/latest/benchmark-quality-summary.json`
 - optional tool artifacts: `results/latest/tooling/benchstat/*.txt`
 
+## Methodology changelog policy
+
+### Update rules
+
+- update this changelog whenever benchmark process, tooling, schema, thresholds, runtime constraints, or interpretation rules change
+- classify each entry as `comparability-impacting` or `non-comparability-impacting`
+- for `comparability-impacting` changes, include migration notes and baseline reset guidance
+- do not publish new benchmark claims without a corresponding changelog entry when methodology or version changed
+
+### Entry format
+
+Use one row per change with required fields:
+
+`version | date (UTC) | change_type | summary | comparability_impact | required_action`
+
+### Changelog
+
+| version | date (UTC) | change_type | summary | comparability_impact | required_action |
+|---|---|---|---|---|---|
+| 1.1.0 | 2026-02-07 | policy | Added publication fairness disclaimer template and README/report sync policy checks | comparability-impacting | Rebaseline external comparisons and reference this version in publication notes |
+| 1.0.0 | 2026-02-05 | baseline | Established parity-gated benchmark workflow, schema validation, and quality gates | comparability-impacting | Treat pre-1.0 outputs as non-comparable to current policy |
+
 ## Interpretation guidance
 
 - treat parity failures as correctness blockers, not performance regressions
