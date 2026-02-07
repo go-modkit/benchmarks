@@ -63,12 +63,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Install benchmark quality tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y hyperfine
-          go install golang.org/x/perf/cmd/benchstat@latest
-          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Install script toolchain
+        run: make setup-dev-env-ci-scripts
+      - name: Run non-network script unit tests
+        run: make test-scripts
       - name: Run benchmark script smoke
         run: bash scripts/run-all.sh
       - name: Generate report from raw results

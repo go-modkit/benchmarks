@@ -2,9 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestMatchStringValue_Tokens(t *testing.T) {
@@ -125,5 +129,196 @@ func TestParityFixtures_AreWellFormed(t *testing.T) {
 				t.Fatalf("scenario %q has invalid response.status in %s", s.Name, path)
 			}
 		}
+	}
+}
+
+func TestSeedTarget_DisabledEndpoint(t *testing.T) {
+	t.Parallel()
+
+	if err := seedTarget("http://example.invalid", "does-not-matter", "", time.Second); err != nil {
+		t.Fatalf("expected nil when seed endpoint disabled, got %v", err)
+	}
+}
+
+func TestSeedTarget_MissingSeedFileIsNoop(t *testing.T) {
+	t.Parallel()
+
+	tmp := t.TempDir()
+	if err := seedTarget("http://example.invalid", tmp, "/debug/parity/seed", time.Second); err != nil {
+		t.Fatalf("expected nil when seed.json missing, got %v", err)
+	}
+}
+
+func TestSeedTarget_HTTPFailure(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	tmp := t.TempDir()
+	seedPath := filepath.Join(tmp, "seed.json")
+	if err := os.WriteFile(seedPath, []byte(`{"users":[]}`), 0o644); err != nil {
+		t.Fatalf("failed writing seed file: %v", err)
+	}
+
+	err := seedTarget(server.URL, tmp, "/debug/parity/seed", time.Second)
+	if err == nil {
+		t.Fatal("expected error for non-2xx seed response")
+	}
+	if !strings.Contains(err.Error(), "seed request returned 500") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRunScenario_StatusMismatch(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer server.Close()
+
+	s := Scenario{
+		Name:     "status mismatch",
+		Request:  RequestSpec{Path: "/health"},
+		Response: ResponseSpec{Status: http.StatusCreated, Body: map[string]interface{}{"ok": true}},
+	}
+
+	err := runScenario(&http.Client{Timeout: time.Second}, server.URL, s)
+	if err == nil || !strings.Contains(err.Error(), "status 200 != 201") {
+		t.Fatalf("expected status mismatch error, got %v", err)
+	}
+}
+
+func TestRunScenario_HeaderMismatch(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Version", "v1")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer server.Close()
+
+	s := Scenario{
+		Name:    "header mismatch",
+		Request: RequestSpec{Path: "/health"},
+		Response: ResponseSpec{
+			Status:  http.StatusOK,
+			Headers: map[string]string{"X-Version": "v2"},
+			Body:    map[string]interface{}{"ok": true},
+		},
+	}
+
+	err := runScenario(&http.Client{Timeout: time.Second}, server.URL, s)
+	if err == nil || !strings.Contains(err.Error(), "header X-Version mismatch") {
+		t.Fatalf("expected header mismatch error, got %v", err)
+	}
+}
+
+func TestRunScenario_InvalidJSONResponse(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("not-json"))
+	}))
+	defer server.Close()
+
+	s := Scenario{
+		Name:     "invalid json",
+		Request:  RequestSpec{Path: "/health"},
+		Response: ResponseSpec{Status: http.StatusOK, Body: map[string]interface{}{"ok": true}},
+	}
+
+	err := runScenario(&http.Client{Timeout: time.Second}, server.URL, s)
+	if err == nil || !strings.Contains(err.Error(), "invalid response JSON") {
+		t.Fatalf("expected invalid JSON error, got %v", err)
+	}
+}
+
+func TestRunScenario_DefaultMethodIsGET(t *testing.T) {
+	t.Parallel()
+
+	methodCh := make(chan string, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodCh <- r.Method
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer server.Close()
+
+	s := Scenario{
+		Name:     "default method",
+		Request:  RequestSpec{Path: "/health"},
+		Response: ResponseSpec{Status: http.StatusOK, Body: map[string]interface{}{"ok": true}},
+	}
+
+	if err := runScenario(&http.Client{Timeout: time.Second}, server.URL, s); err != nil {
+		t.Fatalf("unexpected runScenario error: %v", err)
+	}
+
+	select {
+	case got := <-methodCh:
+		if got != http.MethodGet {
+			t.Fatalf("expected default method GET, got %s", got)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for request method")
+	}
+}
+
+func TestMatchStringValue_InterpolatedTokensRejectInvalidSegments(t *testing.T) {
+	t.Parallel()
+
+	if matchStringValue("/users/@any_number/events/@is_iso8601", "/users/abc/events/2025-01-01T00:00:00Z") {
+		t.Fatal("expected non-numeric segment to fail @any_number")
+	}
+	if matchStringValue("/users/@any_number/events/@is_iso8601", "/users/123/events/not-a-date") {
+		t.Fatal("expected non-iso segment to fail @is_iso8601")
+	}
+}
+
+func TestParityFixtures_NegativeContractCases(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		scenario Scenario
+	}{
+		{
+			name: "empty request path",
+			scenario: Scenario{
+				Name: "bad-path",
+				Request: RequestSpec{
+					Path: "",
+				},
+				Response: ResponseSpec{Status: 200},
+			},
+		},
+		{
+			name: "invalid response status",
+			scenario: Scenario{
+				Name:     "bad-status",
+				Request:  RequestSpec{Path: "/health"},
+				Response: ResponseSpec{Status: 0},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if tc.scenario.Request.Path != "" && tc.scenario.Response.Status > 0 {
+				t.Fatalf("expected invalid fixture contract for case %q", tc.name)
+			}
+		})
 	}
 }

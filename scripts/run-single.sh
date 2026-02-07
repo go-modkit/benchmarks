@@ -30,14 +30,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
 results_root="$repo_root/results/latest"
 expected_raw_dir="$results_root/raw"
-
-resolve_path() {
-  python3 - <<'PY' "$1"
-from pathlib import Path
-import sys
-print(Path(sys.argv[1]).resolve())
-PY
-}
+source "$script_dir/lib.sh"
 
 raw_dir_abs="$(resolve_path "$raw_dir")"
 results_dir_abs="$(resolve_path "$results_dir")"
@@ -56,21 +49,8 @@ if [[ "$results_dir_abs" != "$results_root_abs" ]]; then
   exit 1
 fi
 
-case "$fingerprint_file_abs" in
-  "$results_root_abs"|"$results_root_abs"/*) ;;
-  *)
-    echo "FINGERPRINT_FILE must be under $results_root_abs (got: $fingerprint_file_abs)" >&2
-    exit 1
-    ;;
-esac
-
-case "$manifest_file_abs" in
-  "$results_root_abs"|"$results_root_abs"/*) ;;
-  *)
-    echo "MANIFEST_FILE must be under $results_root_abs (got: $manifest_file_abs)" >&2
-    exit 1
-    ;;
-esac
+ensure_path_under_root "FINGERPRINT_FILE" "$fingerprint_file_abs" "$results_root_abs"
+ensure_path_under_root "MANIFEST_FILE" "$manifest_file_abs" "$results_root_abs"
 
 raw_dir="$expected_raw_abs"
 results_dir="$results_root_abs"

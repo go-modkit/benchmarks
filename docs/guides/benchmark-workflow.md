@@ -83,7 +83,7 @@ make methodology-changelog-check
 make publication-sync-check
 ```
 
-Quality thresholds and required metrics are versioned in `stats-policy.yaml`.
+Quality thresholds and required metrics are versioned in `stats-policy.json` (with `stats-policy.yaml` backward-compatibility support).
 
 ## Reproducibility notes
 

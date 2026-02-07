@@ -76,8 +76,16 @@ BENCH_ENGINE=hyperfine make benchmark
 
 ## Tooling prerequisites
 
+- One-command local setup: `bash scripts/setup-dev-env.sh`
+- CI/subset setup examples:
+  - `bash scripts/setup-dev-env.sh --ci --subset core,python-test,shell-test,benchmark-tools`
+  - `make setup-dev-env-ci-scripts`
+
 - Go (for `go test` and `benchstat`)
 - Python 3
+- pytest + pytest-cov (for Python unit tests)
+- bats-core (for shell integration tests)
+- jsonschema (for schema validation checks)
 - hyperfine (optional benchmark engine)
 - benchstat (`go install golang.org/x/perf/cmd/benchstat@latest`)
 - go-patch-cover (`go install github.com/seriousben/go-patch-cover/cmd/go-patch-cover@latest`, for `make test-patch-coverage`)

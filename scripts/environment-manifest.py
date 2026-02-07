@@ -7,6 +7,8 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
+from benchlib.io_utils import ensure_under_root, read_json, write_json
+
 
 REQUIRED_VERSION_FIELDS = [
     "go",
@@ -90,21 +92,13 @@ def runtime_versions():
     }
 
 
-def ensure_parent(path):
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-
 def ensure_under_results(path):
-    resolved = path.resolve()
-    if resolved == RESULTS_ROOT or RESULTS_ROOT in resolved.parents:
-        return
-    raise SystemExit(f"Refusing path outside results/latest: {path}")
+    ensure_under_root(path, RESULTS_ROOT, "Refusing path outside results/latest")
 
 
-def write_json(path, payload):
+def write_json_safe(path, payload):
     ensure_under_results(path)
-    ensure_parent(path)
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    write_json(path, payload)
 
 
 def collect_fingerprint(out_path):
@@ -113,7 +107,7 @@ def collect_fingerprint(out_path):
         "versions": runtime_versions(),
         "git": git_metadata(),
     }
-    write_json(out_path, payload)
+    write_json_safe(out_path, payload)
     print(f"Wrote: {out_path}")
 
 
@@ -165,10 +159,6 @@ def check_limits(compose_path):
     print("Docker limits check passed")
 
 
-def read_json(path):
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
 def write_manifest(raw_dir, fingerprint_path, out_path):
     if not raw_dir.exists():
         raise SystemExit(f"Raw results directory not found: {raw_dir}")
@@ -203,7 +193,7 @@ def write_manifest(raw_dir, fingerprint_path, out_path):
         "fingerprint": read_json(fingerprint_path),
         "targets": rows,
     }
-    write_json(out_path, manifest)
+    write_json_safe(out_path, manifest)
     print(f"Wrote: {out_path}")
 
 

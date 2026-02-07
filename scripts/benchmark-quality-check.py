@@ -7,12 +7,14 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from benchlib.io_utils import ensure_under_root, load_json_policy
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_ROOT = (REPO_ROOT / "results" / "latest").resolve()
 RAW_DIR = REPO_ROOT / "results" / "latest" / "raw"
 QUALITY_SUMMARY_FILE = REPO_ROOT / "results" / "latest" / "benchmark-quality-summary.json"
-POLICY_FILE = REPO_ROOT / "stats-policy.yaml"
+POLICY_FILE = REPO_ROOT / "stats-policy.json"
 TOOLING_DIR = REPO_ROOT / "results" / "latest" / "tooling"
 
 
@@ -28,13 +30,6 @@ def load_raw_rows(raw_dir):
     if not rows:
         raise SystemExit(f"No raw benchmark files found in: {raw_dir}")
     return rows
-
-
-def load_policy(path):
-    if not path.exists():
-        raise SystemExit(f"Policy file not found: {path}")
-    text = path.read_text(encoding="utf-8")
-    return json.loads(text)
 
 
 def ensure_number(value, label):
@@ -53,10 +48,7 @@ def get_path_value(data, dotted_path):
 
 
 def ensure_under_results(path, label):
-    resolved = path.resolve()
-    if resolved == RESULTS_ROOT or RESULTS_ROOT in resolved.parents:
-        return resolved
-    raise SystemExit(f"{label} must be under {RESULTS_ROOT}: {resolved}")
+    return ensure_under_root(path, RESULTS_ROOT, label)
 
 
 def check_stats(args, policy):
@@ -371,7 +363,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    policy = load_policy(args.policy_file)
+    policy = load_json_policy(args.policy_file)
 
     if args.cmd == "stats-check":
         check_stats(args, policy)
