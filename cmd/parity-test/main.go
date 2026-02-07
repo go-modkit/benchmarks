@@ -1,3 +1,4 @@
+// Package main implements the parity test runner that validates API behavior across services.
 package main
 
 import (
@@ -15,12 +16,14 @@ import (
 	"time"
 )
 
+// Scenario defines a single test case pointing at an API endpoint.
 type Scenario struct {
 	Name     string       `json:"name"`
 	Request  RequestSpec  `json:"request"`
 	Response ResponseSpec `json:"response"`
 }
 
+// RequestSpec describes the HTTP request parameters for a scenario.
 type RequestSpec struct {
 	Method  string            `json:"method"`
 	Path    string            `json:"path"`
@@ -28,12 +31,14 @@ type RequestSpec struct {
 	Body    interface{}       `json:"body"`
 }
 
+// ResponseSpec defines the expected HTTP response for a scenario.
 type ResponseSpec struct {
 	Status  int               `json:"status"`
 	Headers map[string]string `json:"headers"`
 	Body    interface{}       `json:"body"`
 }
 
+// main runs the parity test runner against the configured target service.
 func main() {
 	target := flag.String("target", "", "Base URL of the service to validate (e.g. http://localhost:3001)")
 	fixtures := flag.String("fixtures", "test/fixtures/parity", "Directory containing parity fixtures")
@@ -96,6 +101,7 @@ func main() {
 	}
 }
 
+// seedTarget posts the seed fixture to the target seed endpoint if available.
 func seedTarget(base, fixturesDir, endpoint string, timeout time.Duration) error {
 	if endpoint == "" {
 		return nil
@@ -126,6 +132,7 @@ func seedTarget(base, fixturesDir, endpoint string, timeout time.Duration) error
 	return nil
 }
 
+// runScenario executes a Scenario and validates the actual HTTP response.
 func runScenario(client *http.Client, base string, scenario Scenario) error {
 	reqBody := []byte{}
 	if scenario.Request.Body != nil {
@@ -186,6 +193,7 @@ func runScenario(client *http.Client, base string, scenario Scenario) error {
 	return nil
 }
 
+// checkHeaders asserts that the actual HTTP headers contain the expected values.
 func checkHeaders(expected map[string]string, actual http.Header) error {
 	for key, expVal := range expected {
 		got := actual.Get(key)
@@ -199,6 +207,7 @@ func checkHeaders(expected map[string]string, actual http.Header) error {
 	return nil
 }
 
+// compareValue recursively compares expected fixture values against actual responses.
 func compareValue(expected, actual interface{}) (bool, string) {
 	switch exp := expected.(type) {
 	case map[string]interface{}:
@@ -248,6 +257,7 @@ func compareValue(expected, actual interface{}) (bool, string) {
 	}
 }
 
+// matchStringValue applies matcher tokens to strings (e.g., @any_number).
 func matchStringValue(expected string, actual interface{}) bool {
 	switch expected {
 	case "@any_number":
@@ -278,6 +288,7 @@ func matchStringValue(expected string, actual interface{}) bool {
 	return expected == actStr
 }
 
+// isNumber reports whether the provided value represents a number.
 func isNumber(value interface{}) bool {
 	switch value.(type) {
 	case float64, float32, int, int64, json.Number:
@@ -290,6 +301,7 @@ func isNumber(value interface{}) bool {
 	}
 }
 
+// isISO8601 checks whether a string is an ISO 8601 timestamp.
 func isISO8601(value string) bool {
 	if _, err := time.Parse(time.RFC3339Nano, value); err == nil {
 		return true
