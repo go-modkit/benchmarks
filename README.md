@@ -27,6 +27,9 @@ make ci-benchmark-quality-check
 
 Benchmark/report flow enforces schema validation for raw and summary artifacts before quality gates.
 
+Manual bounded benchmark workflow is available in GitHub Actions as `benchmark-manual`.
+See `docs/guides/benchmark-workflow.md` for input bounds and execution details.
+
 Use OSS measurement engine (optional):
 
 ```bash
