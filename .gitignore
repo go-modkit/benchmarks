@@ -17,3 +17,4 @@ coverage.out
 
 # Local OMO planning/state artifacts
 .sisyphus/
+.plans/
