@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+title: "go-modkit/benchmarks"
+message: "If you use this benchmark harness or reference its results, please cite it."
+type: software
+authors:
+  - family-names: Kogan
+    given-names: Arye
+    email: aryekogan@gmail.com
+url: "https://github.com/go-modkit/benchmarks"
+repository-code: "https://github.com/go-modkit/benchmarks"
+license: MIT
+keywords:
+  - benchmark
+  - go
+  - framework-benchmark
+  - api-parity
+  - performance-testing
