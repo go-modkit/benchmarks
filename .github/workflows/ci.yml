@@ -67,6 +67,8 @@ jobs:
         run: make setup-dev-env-ci-scripts
       - name: Run non-network script unit tests
         run: make test-scripts
+      - name: Validate marker debt policy
+        run: make todo-debt-check
       - name: Run benchmark script smoke
         run: bash scripts/run-all.sh
       - name: Generate report from raw results

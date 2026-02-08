@@ -12,7 +12,7 @@ Replace custom statistical processing logic with OSS benchmark/statistics toolin
 In:
 1. Integrate `hyperfine` as the benchmark measurement engine.
 2. Integrate `benchstat` for statistical pass/fail checks.
-3. Add a versioned policy file (`stats-policy.yaml`) for thresholds and rules.
+3. Add a versioned policy file (`stats-policy.json`) for thresholds and rules.
 4. Keep `results/latest/*` artifacts stable for summary/report consumers.
 5. Update docs to reflect the new measurement and quality gate model.
 
@@ -32,8 +32,8 @@ Out:
 1. **Parity Gate (existing behavior):** health check -> parity check per target.
 2. **Measurement:** run benchmark samples using `hyperfine`.
 3. **Normalization:** transform tool-native output into repo raw schema.
-4. **Quality Gate:** run `benchstat`-based policy checks.
-5. **Reporting:** generate `summary.json` and `report.md` from normalized artifacts.
+4. **Reporting:** generate `summary.json` and `report.md` from normalized artifacts.
+5. **Quality Gate:** run policy checks (`benchstat`, variance thresholds, publication checks) on generated artifacts.
 
 ### 4.2. What Remains Custom
 1. Framework matrix orchestration and target routing.
@@ -46,7 +46,7 @@ Out:
 
 ## 5. Policy Design
 
-### 5.1. `stats-policy.yaml` (single source of truth)
+### 5.1. `stats-policy.json` (single source of truth)
 Policy fields:
 - significance (`alpha`), default `0.05`
 - minimum run count per target
@@ -82,7 +82,7 @@ CI keeps `make ci-benchmark-quality-check` as the primary gate and:
 ## 8. Migration Plan
 
 ### Phase A: Policy + Interfaces
-1. Add `stats-policy.yaml`.
+1. Add `stats-policy.json`.
 2. Define normalized schema compatibility contract.
 3. Add adapter interfaces without changing default execution path.
 
