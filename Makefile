@@ -16,7 +16,7 @@ GOPATH ?= $(shell $(GO) env GOPATH)
 GO_PATCH_COVER ?= $(GOPATH)/bin/go-patch-cover
 MODULES = $(shell find . -type f -name "go.mod" -not -path "*/.*/*" -not -path "*/vendor/*" -exec dirname {} \;)
 
-.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test test-go test-python test-shell test-scripts test-coverage test-coverage-go test-coverage-python test-patch-coverage tools setup-dev-env setup-dev-env-ci setup-dev-env-ci-scripts parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-raw-schema-check benchmark-summary-schema-check benchmark-schema-validate benchmark-stats-check benchmark-variance-check benchmark-benchstat-check ci-benchmark-quality-check workflow-concurrency-check workflow-budget-check workflow-inputs-check report-disclaimer-check methodology-changelog-check publication-sync-check
+.PHONY: benchmark benchmark-modkit benchmark-nestjs benchmark-baseline benchmark-wire benchmark-fx benchmark-do report test test-go test-python test-shell test-scripts test-coverage test-coverage-go test-coverage-python test-patch-coverage tools setup-dev-env setup-dev-env-ci setup-dev-env-ci-scripts parity-check parity-check-modkit parity-check-nestjs benchmark-fingerprint-check benchmark-limits-check benchmark-manifest-check benchmark-raw-schema-check benchmark-summary-schema-check benchmark-schema-validate benchmark-stats-check benchmark-variance-check benchmark-benchstat-check ci-benchmark-quality-check workflow-concurrency-check workflow-budget-check workflow-inputs-check todo-debt-check report-disclaimer-check methodology-changelog-check publication-sync-check
 
 benchmark:
 	bash scripts/run-all.sh
@@ -169,3 +169,6 @@ workflow-budget-check:
 
 workflow-inputs-check:
 	$(PYTHON) scripts/workflow-policy-check.py inputs-check
+
+todo-debt-check:
+	$(PYTHON) scripts/todo-debt-check.py

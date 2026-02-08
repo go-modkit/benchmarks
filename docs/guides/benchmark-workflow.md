@@ -78,12 +78,13 @@ make benchmark-stats-check
 make benchmark-variance-check
 make benchmark-benchstat-check
 make ci-benchmark-quality-check
+make todo-debt-check
 make report-disclaimer-check
 make methodology-changelog-check
 make publication-sync-check
 ```
 
-Quality thresholds and required metrics are versioned in `stats-policy.json` (with `stats-policy.yaml` backward-compatibility support).
+Quality thresholds and required metrics are versioned in `stats-policy.json`.
 
 ## Reproducibility notes
 

@@ -22,7 +22,7 @@
 - shell scripts in `scripts/` for orchestration
 - `hyperfine` benchmark engine (optional via `BENCH_ENGINE=hyperfine`)
 - `benchstat` statistical comparison for quality gates
-- policy file: `stats-policy.json` (`stats-policy.yaml` accepted for backward compatibility)
+- policy file: `stats-policy.json`
 - Python 3 report and normalization tooling in `scripts/`
 
 ## Baseline benchmark profile
